@@ -22,6 +22,7 @@ public class ConnectionGraphicalUserInterface extends JFrame implements ActionLi
 	JLabel passwordLabel = new JLabel("Password: ");
 	
 	JButton loginButton = new JButton("Login");
+	JButton registerButton = new JButton("Register");
 	
 	JTextField name = new JTextField();
 	JPasswordField password = new JPasswordField();
@@ -78,6 +79,11 @@ public class ConnectionGraphicalUserInterface extends JFrame implements ActionLi
 		{
 			login();
 		}
+		else if(e.getSource() == registerButton)
+		{
+			Main.registering = true;
+			login();
+		}
 	}
 
 	@Override
@@ -85,6 +91,11 @@ public class ConnectionGraphicalUserInterface extends JFrame implements ActionLi
 	{
 		if(e.getKeyCode() == KeyEvent.VK_ENTER)
 		{
+			login();
+		}
+		else if(e.getSource() == registerButton)
+		{
+			Main.registering = true;
 			login();
 		}
 	}

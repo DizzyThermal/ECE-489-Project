@@ -7,7 +7,6 @@ public class Main
 
 	public static int userId = 0;
 	public static ArrayList<User> userList = new ArrayList<User>();
-	public static ArrayList<String> ips = new ArrayList<String>();
 	public static ArrayList<ConnectionThread> clientThreads = new ArrayList<ConnectionThread>();
 	
 	public static void main(String[] args)

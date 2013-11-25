@@ -4,6 +4,7 @@ public class Main
 {
 	public static JFrame go;
 	public static boolean connectionGUIStatus = false;
+	public static boolean registering = false;
 	
 	public static void main(String[] args)
 	{
@@ -20,7 +21,7 @@ public class Main
 			catch (InterruptedException e1) { e1.printStackTrace(); }
 		}
 		
-		go = new UserListGraphicalUserInterface();
+		go = new UserListGraphicalUserInterface(registering);
 		go.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		go.setSize(300, 600);
 		go.setResizable(true);

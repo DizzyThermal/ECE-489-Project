@@ -8,6 +8,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
@@ -21,21 +22,22 @@ import org.json.simple.parser.ParseException;
 
 public class UserListGraphicalUserInterface extends JFrame implements ActionListener
 {
-	JPanel usersPanel = new JPanel(new BorderLayout());
-	JScrollPane users = new JScrollPane(usersPanel);
-	ArrayList<JTextField> userTextFields = new ArrayList<JTextField>();
+	public JPanel usersPanel = new JPanel(new BorderLayout());
+	public JScrollPane users = new JScrollPane(usersPanel);
+	public ArrayList<JTextField> userTextFields = new ArrayList<JTextField>();
 	
-	public static ArrayList<User> userList = new ArrayList<User>();
+	public ArrayList<ChatWindowGraphicalUserInterface> connectedUsers = new ArrayList<ChatWindowGraphicalUserInterface>();
+	public ArrayList<User> userList = new ArrayList<User>();
 	
-	public static Socket clientSocket;
-	public static PrintWriter pWriter;
-	public static BufferedReader bReader;
+	public Socket clientSocket;
+	public PrintWriter pWriter;
+	public BufferedReader bReader;
 
 	public Thread t1;
 	
-	public static int id = -1;
+	public int id = -1;
 	
-	UserListGraphicalUserInterface()
+	UserListGraphicalUserInterface(boolean registering)
 	{
 		super("ECE 489 - JIM (" + Resource.VERSION_NUMBER + " - " + Resource.VERSION_CODENAME + ")");
 		setLayout(new BorderLayout());
@@ -45,7 +47,10 @@ public class UserListGraphicalUserInterface extends JFrame implements ActionList
 
 		JSONObject connectionJSON = new JSONObject();
 		connectionJSON.put("source", "client");
-		connectionJSON.put("action", "connect");
+		if(registering)
+			connectionJSON.put("action", "register");
+		else
+			connectionJSON.put("action", "connect");
 		connectionJSON.put("username", Resource.USERNAME);
 		connectionJSON.put("password", DigestUtils.md5Hex(Resource.PASSWORD));
 		
@@ -94,14 +99,24 @@ public class UserListGraphicalUserInterface extends JFrame implements ActionList
 								removeUser(Integer.parseInt((String)incomingJSON.get("userId")));
 							else if(action.equals("updateUsers"))
 								updateUsers((String[])incomingJSON.get("userIds"), (String[])incomingJSON.get("userNames"), (String[])incomingJSON.get("userIps"));
+							else if(action.equals("message"))
+								JOptionPane.showMessageDialog(null, (String)incomingJSON.get("serverMessageTitle"), (String)incomingJSON.get("serverMessage"), JOptionPane.DEFAULT_OPTION);
 						}
 						else if(incomingJSON.get("source").equals("client"))
 						{
-							// Create Windows and Connection if it isn't made
-							//
-							// ELSE
-							//
-							// Append to Chat Window of GUI that is open
+							int clientIndex = checkConnection(Integer.parseInt((String)incomingJSON.get("userId"))); 
+							if(clientIndex < 0)
+							{
+								ChatWindowGraphicalUserInterface cwGUI = new ChatWindowGraphicalUserInterface(Integer.parseInt((String)incomingJSON.get("userId")), getUserNameById(Integer.parseInt((String)incomingJSON.get("userId"))), getIpById(Integer.parseInt((String)incomingJSON.get("userId"))), (String)incomingJSON.get("userMessage"));
+								cwGUI.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+								cwGUI.setSize(300, 600);
+								cwGUI.setResizable(true);
+								cwGUI.setVisible(true);
+							}
+							else
+							{
+								connectedUsers.get(clientIndex).append((String)incomingJSON.get("message"));
+							}
 						}
 					}
 				}
@@ -165,6 +180,17 @@ public class UserListGraphicalUserInterface extends JFrame implements ActionList
 		}
 	}
 	
+	public int checkConnection(int id)
+	{
+		for(int i = 0; i < connectedUsers.size(); i++)
+		{
+			if(connectedUsers.get(i).getId() == id)
+				return i;
+		}
+		
+		return -1;
+	}
+	
 	public void disconnect()
 	{
 		if (pWriter != null)
@@ -184,6 +210,32 @@ public class UserListGraphicalUserInterface extends JFrame implements ActionList
 		System.exit(0);
 	}
 
+	public String getUserNameById(int id)
+	{
+		for(int i = 0; i < userList.size(); i++)
+		{
+			if(userList.get(i).getId() == id)
+			{
+				return userList.get(i).getName();
+			}
+		}
+		
+		return null;
+	}
+	
+	public String getIpById(int id)
+	{
+		for(int i = 0; i < userList.size(); i++)
+		{
+			if(userList.get(i).getId() == id)
+			{
+				return userList.get(i).getIp();
+			}
+		}
+		
+		return null;
+	}
+	
 	@Override
 	public void actionPerformed(ActionEvent e) 
 	{
