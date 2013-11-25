@@ -7,6 +7,7 @@ public class Resource
 	public static String PORT						= "8010";
 	
 	public static String USERNAME					= getUsername();
+	public static String PASSWORD					= "";
 	
 	public static String getUsername()
 	{

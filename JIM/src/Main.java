@@ -20,10 +20,10 @@ public class Main
 			catch (InterruptedException e1) { e1.printStackTrace(); }
 		}
 		
-		go = new GraphicalUserInterface();
+		go = new UserListGraphicalUserInterface();
 		go.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		go.setSize(800, 600);
-		go.setResizable(false);
+		go.setSize(300, 600);
+		go.setResizable(true);
 		go.setVisible(true);
 	}
 }

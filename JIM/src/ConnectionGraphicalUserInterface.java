@@ -7,34 +7,24 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 
 import javax.swing.JButton;
-import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JSpinner;
+import javax.swing.JPasswordField;
 import javax.swing.JTextField;
-import javax.swing.SpinnerNumberModel;
 
 public class ConnectionGraphicalUserInterface extends JFrame implements ActionListener, KeyListener
 {
-	private static final long serialVersionUID = 1L;
-	
 	JPanel mainPanel = new JPanel();
 
 	JLabel titleLabel = new JLabel("Connection Information");
 	JLabel nameLabel = new JLabel("Username: ");
-	JLabel addressLabel = new JLabel("Address: ");
-	JLabel portLabel = new JLabel("Port: ");
-	JLabel transferLabel = new JLabel("Transfer Type: ");
-	JLabel downloadLabel = new JLabel("Download Save Directory: ");
+	JLabel passwordLabel = new JLabel("Password: ");
 	
-	String[] dataTypesStrings = { "TCP", "UDP" };
-	
-	JButton okButton = new JButton("OK");
+	JButton loginButton = new JButton("Login");
 	
 	JTextField name = new JTextField();
-	JTextField address = new JTextField();
-	JSpinner port = new JSpinner(new SpinnerNumberModel(8010, 0, 65535, 1));
+	JPasswordField password = new JPasswordField();
 	
 	ConnectionGraphicalUserInterface()
 	{
@@ -61,48 +51,41 @@ public class ConnectionGraphicalUserInterface extends JFrame implements ActionLi
 		name.addKeyListener(this);
 		mainPanel.add(name);
 		
-		addressLabel.setPreferredSize(new Dimension(250, 20));
-		mainPanel.add(addressLabel);
-		address.setPreferredSize(new Dimension(250, 20));
-		address.setText(Resource.IP);
-		address.addKeyListener(this);
-		mainPanel.add(address);
+		passwordLabel.setPreferredSize(new Dimension(250, 20));
+		mainPanel.add(passwordLabel);
+		password.setPreferredSize(new Dimension(250, 20));
+		password.setText(Resource.IP);
+		password.addKeyListener(this);
+		mainPanel.add(password);
 		
-		portLabel.setPreferredSize(new Dimension(250, 20));
-		mainPanel.add(portLabel);
-		port.setPreferredSize(new Dimension(250, 20));
-		port.addKeyListener(this);
-		mainPanel.add(port);
-		
-		mainPanel.add(okButton);
+		mainPanel.add(loginButton);
 		mainPanel.addKeyListener(this);
-		okButton.addActionListener(this);
+		loginButton.addActionListener(this);
+	}
+	
+	public void login()
+	{
+		Resource.USERNAME = name.getText();
+		Resource.PASSWORD = new String(password.getPassword());
+		this.setVisible(false);
+		Main.connectionGUIStatus = true;
 	}
 
 	@Override
 	public void actionPerformed(ActionEvent e)
 	{
-		if(e.getSource() == okButton)
+		if(e.getSource() == loginButton)
 		{
-			Resource.USERNAME = name.getText().replace("/", "");
-			Resource.IP = address.getText();
-			Resource.PORT = String.valueOf(port.getValue());
-			this.setVisible(false);
-			Main.connectionGUIStatus = true;
+			login();
 		}
 	}
-
 
 	@Override
 	public void keyPressed(KeyEvent e) 
 	{
 		if(e.getKeyCode() == KeyEvent.VK_ENTER)
 		{
-			Resource.USERNAME = name.getText().replace("/", "");
-			Resource.IP = address.getText();
-			Resource.PORT = String.valueOf(port.getValue());
-			this.setVisible(false);
-			Main.connectionGUIStatus = true;
+			login();
 		}
 	}
 
