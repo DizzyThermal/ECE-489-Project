@@ -11,7 +11,7 @@ public class ConnectionThread
 	String IP = null;
 	int ID = -1;
 	
-	public ConnectionThread(final int id, final Socket socket)
+	public ConnectionThread(final int id, final Socket socket, final String ip)
 	{
 		ID = id;
 		try
@@ -38,33 +38,50 @@ public class ConnectionThread
 						{
 						String clientMessage = bReader.readLine();
 						System.out.println(clientMessage);
-						if (clientMessage == null)
+						if (clientMessage != null)
 						{
-							//system.out.println("null");
+							// Replace with JSON stuff
+							if(clientMessage.contains("/connected"))
+							{
+								// Need to Authenticate Password with MySQL Database
+								Main.userList.add(new User(id, clientMessage.substring(11), ip));
+								pWriter.println("/id " + id);
+								
+								// JSON to update userlist (add new person)
+								Main.writeToAll("/userlist " + Main.getUserList());
+							}
+							else if(clientMessage.contains("/register"))
+							{
+								// Need to pass Username and Password to Database to register (if user doesn't already exist)
+							}
+							else if(clientMessage.contains("/disconnect"))
+							{
+								// Make Remove String JSON to update everyone's Userlist
+								Main.writeToAll("/remove " + Main.removeUser(clientMessage));
+								Main.ips.remove(IP);
+								thread.stop();
+							}
+							else
+							{
+								// Need to have ID of who the recipient is + message (JSON)
+								int userId = 0; // This is temporary to make code not error, will be resolved from JSON
+								String userMessage = "Temporary Message"; // This is temporary to make code not error, will be resolved from JSON
+								
+								for(int i = 0; i < Main.userList.size(); i++)
+								{
+									if(Main.userList.get(i).getId() == userId)
+									{
+										for(int j = 0; j < Main.clientThreads.size(); j++)
+										{
+											if(Main.clientThreads.get(j).getId() == userId)
+											{
+												Main.clientThreads.get(j).writeToClient(userMessage);
+											}
+										}
+									}
+								}
+							}
 						}
-						else if(clientMessage.contains("/connected"))
-						{
-							Main.userList.add(new User(id, clientMessage.substring(11)));
-							pWriter.println("/id " + id);
-							Main.writeToAll("/userlist " + Main.getUserList());
-						}
-						else if(clientMessage.contains("/name"))
-						{
-							Main.writeToAll("/console ** " + Main.getUserFromId(Integer.parseInt((clientMessage.split(" ")[1]).split("\\\\")[0])) + " CHANGED THEIR NAME TO " + Main.parseName(clientMessage) + " **");
-							Main.writeToAll("/update " + Main.updateUser(clientMessage));
-						}
-						else if(clientMessage.contains("/file"))
-						{	
-							Main.receiveAndBounceMessage(clientMessage, socket);			
-						}
-						else if(clientMessage.contains("/disconnect"))
-						{
-							Main.writeToAll("/remove " + Main.removeUser(clientMessage));
-							Main.ips.remove(IP);
-							thread.stop();
-						}
-						else
-							Main.writeToAll("/msg " + clientMessage);
 					}
 					}
 				}
@@ -78,4 +95,6 @@ public class ConnectionThread
 	{
 		pWriter.println(message);
 	}
+	
+	public int getId() { return ID; }
 }
