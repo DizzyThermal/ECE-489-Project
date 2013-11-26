@@ -15,6 +15,7 @@ public class Main
 		cGUI.setResizable(false);
 		cGUI.setVisible(true);
 
+		// Poll here while user enters login information
 		while(!connectionGUIStatus)
 		{
 			try { Thread.sleep(1);}
