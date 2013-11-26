@@ -42,7 +42,7 @@ public class UserListGraphicalUserInterface extends JFrame implements ActionList
 		super("ECE 489 - JIM (" + Resource.VERSION_NUMBER + " - " + Resource.VERSION_CODENAME + ")");
 		setLayout(new BorderLayout());
 		
-		((JTextArea)((JViewport)users.getComponent(0)).getView()).setEditable(false);
+		//((JTextArea)((JViewport)users.getComponent(0)).getView()).setEditable(false);
 		add(users, BorderLayout.CENTER);
 
 		JSONObject connectionJSON = new JSONObject();
@@ -82,7 +82,7 @@ public class UserListGraphicalUserInterface extends JFrame implements ActionList
 					
 					if(!incomingMessage.equals(""))
 					{
-						
+						System.out.println(incomingMessage);
 						JSONObject incomingJSON = null;
 						try
 						{
