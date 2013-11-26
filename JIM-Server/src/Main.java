@@ -1,9 +1,12 @@
-import java.net.ServerSocket;
 import java.util.ArrayList;
+
+import javax.net.ssl.SSLServerSocket;
+import javax.net.ssl.SSLServerSocketFactory;
+import javax.net.ssl.SSLSocket;
 
 public class Main
 {
-	public static ServerSocket serverSocket;
+	public static SSLServerSocket serverSocket;
 
 	public static int userId = 0;
 	public static ArrayList<User> userList = new ArrayList<User>();
@@ -13,10 +16,10 @@ public class Main
 	{
 		try
 		{
-			serverSocket = new ServerSocket(Integer.parseInt(Resource.PORT));
+			serverSocket = (SSLServerSocket) SSLServerSocketFactory.getDefault().createServerSocket(Integer.parseInt(Resource.PORT));
 		}
 		catch (Exception e) { e.printStackTrace(); }
-		
+
 		System.out.println("Listening on Port: " + Resource.PORT);
 
 		while(true) 
@@ -25,7 +28,7 @@ public class Main
 			{
 				if(serverSocket.getInetAddress().toString() != "0.0.0.0/0.0.0.0" && !isConnected(serverSocket.getInetAddress().toString()))
 				{
-					clientThreads.add(new ConnectionThread(++userId, serverSocket.accept(), serverSocket.getInetAddress().toString().split("/")[0]));
+					clientThreads.add(new ConnectionThread(++userId, (SSLSocket) serverSocket.accept(), serverSocket.getInetAddress().toString().split("/")[0]));
 				}
 			}
 			catch (Exception e) { e.printStackTrace(); }
