@@ -1,9 +1,8 @@
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.net.Socket;
 
-import javax.swing.JFrame;
+import javax.net.ssl.SSLSocket;
 
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -16,7 +15,7 @@ public class ConnectionThread
 	PrintWriter pWriter;
 	int id = -1;
 	
-	public ConnectionThread(final int id, final Socket socket, final String ip)
+	public ConnectionThread(final int id, final SSLSocket socket, final String ip)
 	{
 		this.id = id;
 		try

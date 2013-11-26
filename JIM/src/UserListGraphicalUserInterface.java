@@ -4,9 +4,10 @@ import java.awt.event.ActionListener;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.net.Socket;
 import java.util.ArrayList;
 
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -29,7 +30,7 @@ public class UserListGraphicalUserInterface extends JFrame implements ActionList
 	public ArrayList<ChatWindowGraphicalUserInterface> connectedUsers = new ArrayList<ChatWindowGraphicalUserInterface>();
 	public ArrayList<User> userList = new ArrayList<User>();
 	
-	public Socket clientSocket;
+	public SSLSocket clientSocket;
 	public PrintWriter pWriter;
 	public BufferedReader bReader;
 
@@ -56,7 +57,7 @@ public class UserListGraphicalUserInterface extends JFrame implements ActionList
 		
 		try
 		{
-			clientSocket = new Socket(Resource.IP, Integer.parseInt(Resource.PORT));
+			clientSocket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(Resource.IP, Integer.parseInt(Resource.PORT));
 			pWriter = new PrintWriter(clientSocket.getOutputStream(), true);
 			bReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 
