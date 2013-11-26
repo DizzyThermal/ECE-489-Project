@@ -24,7 +24,8 @@ public class ConnectionThread
 			pWriter = new PrintWriter(socket.getOutputStream(), true);
 		}
 		catch(Exception e) { e.printStackTrace(); }
-
+		System.out.println("Socket: "+socket.isConnected());
+		System.out.println(bReader);
 		thread = new Thread()
 		{
 			@Override
@@ -36,8 +37,10 @@ public class ConnectionThread
 					
 					while(!socket.isClosed())
 					{
+						//System.out.println("Inside Socket While loop");
 						if(bReader.ready())
 						{
+							System.out.println("Breader is ready");
 							String clientMessage = bReader.readLine();
 							System.out.println(clientMessage);
 

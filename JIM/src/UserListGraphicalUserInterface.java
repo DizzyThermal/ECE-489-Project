@@ -54,18 +54,24 @@ public class UserListGraphicalUserInterface extends JFrame implements ActionList
 			connectionJSON.put("action", "connect");
 		connectionJSON.put("username", Resource.USERNAME);
 		connectionJSON.put("password", DigestUtils.md5Hex(Resource.PASSWORD));
-		
+
+		System.out.println("Before Try");
 		try
 		{
 			clientSocket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(Resource.IP, Integer.parseInt(Resource.PORT));
 			pWriter = new PrintWriter(clientSocket.getOutputStream(), true);
 			bReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-
+			
+			System.out.println(clientSocket.isConnected());
+			System.out.println("Before print: "+connectionJSON.toJSONString());
+			System.out.println(clientSocket.getOutputStream());
 			pWriter.println(connectionJSON.toJSONString());
+			System.out.println("Just wrote to buffer");
 			
 		}
 		catch (Exception e) { e.printStackTrace(); }
 
+		System.out.println("Before thread create");
 		t1 = (new Thread()
 		{
 			@Override
@@ -73,6 +79,7 @@ public class UserListGraphicalUserInterface extends JFrame implements ActionList
 			{
 				while(this.isAlive())
 				{
+					System.out.println("I am alive.");
 					String incomingMessage = "";
 					try
 					{
@@ -81,6 +88,7 @@ public class UserListGraphicalUserInterface extends JFrame implements ActionList
 					}
 					catch(Exception e) { e.printStackTrace(); }
 					
+					System.out.println(incomingMessage);
 					if(!incomingMessage.equals(""))
 					{
 						System.out.println(incomingMessage);
@@ -119,6 +127,10 @@ public class UserListGraphicalUserInterface extends JFrame implements ActionList
 								connectedUsers.get(clientIndex).append((String)incomingJSON.get("message"));
 							}
 						}
+					}
+					else{
+						System.out.println("User List Graphical User Interface will not be loaded.");
+						return;
 					}
 				}
 			}
