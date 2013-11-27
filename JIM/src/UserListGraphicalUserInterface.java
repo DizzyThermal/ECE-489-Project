@@ -2,9 +2,10 @@ import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.BufferedReader;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
+import java.io.BufferedWriter;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 
 import javax.net.ssl.SSLSocket;
@@ -30,10 +31,8 @@ public class UserListGraphicalUserInterface extends JFrame implements ActionList
 	public ArrayList<User> userList = new ArrayList<User>();
 	
 	public SSLSocket clientSocket;
-	//public PrintWriter pWriter;
-	public DataOutputStream pWriter;
-	//public BufferedReader bReader;
-	public DataInputStream bReader;
+	public PrintWriter pWriter;
+	public BufferedReader bReader;
 
 	public Thread t1;
 	
@@ -60,20 +59,18 @@ public class UserListGraphicalUserInterface extends JFrame implements ActionList
 		try
 		{
 			clientSocket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(Resource.IP, Integer.parseInt(Resource.PORT));
-			//pWriter = new PrintWriter(clientSocket.getOutputStream(), true);
-			pWriter = new DataOutputStream(clientSocket.getOutputStream());
-			bReader = new DataInputStream(clientSocket.getInputStream());
-			
+			clientSocket.setEnabledCipherSuites(clientSocket.getSupportedCipherSuites());
+			BufferedWriter bWriter = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
+			bReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 			System.out.println(clientSocket.isConnected());
 			System.out.println("Before print: "+connectionJSON.toJSONString());
 			System.out.println(clientSocket.getOutputStream());
-			pWriter.writeBytes("Test");
-			
-			//pWriter.println(connectionJSON.toJSONString());
+			bWriter.write(connectionJSON.toJSONString()+"\n");
+			bWriter.flush();
 			System.out.println("Just wrote to buffer");
 			
 		}
-		catch (Exception e) { e.printStackTrace(); }
+ 		catch (Exception e) { e.printStackTrace(); }
 
 		System.out.println("Before thread create");
 		t1 = (new Thread()
@@ -87,10 +84,8 @@ public class UserListGraphicalUserInterface extends JFrame implements ActionList
 					String incomingMessage = "";
 					try
 					{
-						/*
 						if(bReader != null && bReader.ready())
 							incomingMessage = bReader.readLine();
-					*/
 					}
 					catch(Exception e) { e.printStackTrace(); }
 					
@@ -213,7 +208,7 @@ public class UserListGraphicalUserInterface extends JFrame implements ActionList
 	public void disconnect()
 	{
 		if (pWriter != null)
-			// NJP-pWriter.println("/disconnect " + id);
+			pWriter.println("/disconnect " + id);
 		t1.stop();
 		try
 		{

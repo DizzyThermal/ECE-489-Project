@@ -1,7 +1,8 @@
 import java.io.BufferedReader;
-import java.io.DataInputStream;
+import java.io.BufferedWriter;
+import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.PrintStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 
 import javax.net.ssl.SSLSocket;
@@ -10,12 +11,11 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
-public class ConnectionThread
+public class ConnectionThread 	 
 {
 	Thread thread;
-	DataInputStream bReader;
-	//PrintWriter pWriter;
-	PrintStream pWriter;
+	BufferedReader bReader;
+	BufferedWriter bWriter;
 	int id = -1;
 	
 	public ConnectionThread(final int id, final SSLSocket socket, final String ip)
@@ -23,12 +23,11 @@ public class ConnectionThread
 		this.id = id;
 		try
 		{
-			//bReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-			bReader = new DataInputStream(socket.getInputStream());
-			//pWriter = new PrintWriter(socket.getOutputStream(), true);
-			pWriter = new PrintStream(socket.getOutputStream());
+			bReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+			bWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
 		}
 		catch(Exception e) { e.printStackTrace(); }
+		socket.setEnabledCipherSuites(socket.getSupportedCipherSuites());
 		System.out.println("Socket: "+socket.isConnected());
 		System.out.println(bReader);
 		thread = new Thread()
@@ -42,13 +41,9 @@ public class ConnectionThread
 					
 					while(!socket.isClosed())
 					{
-						//System.out.println("Inside Socket While loop");
-						//if(bReader.ready()) // NJP-
+						//if(bReader.ready())
 						{
-							System.out.println("Breader is ready");
 							String clientMessage = bReader.readLine();
-							System.out.println(clientMessage);
-
 							if (clientMessage != null)
 							{
 								JSONObject incomingJSON = null;
@@ -105,7 +100,12 @@ public class ConnectionThread
 	
 	public void writeToClient(String message)
 	{
-		pWriter.println(message);
+		try {
+			bWriter.write(message);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	public int getId() { return id; }
