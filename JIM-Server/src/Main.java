@@ -35,47 +35,10 @@ public class Main
 		}
 	}
 	
-	public static String getUserList()
-	{
-		// Replace this with MySQL request to pull Users
-		String userStr = "";
-		
-		for(int i = 0; i < userList.size(); i++)
-		{
-			int id = userList.get(i).getId();
-			String name = userList.get(i).getName().trim();
-
-			userStr = userStr + String.valueOf(id) + "\\" + name;
-			if((i+1) < userList.size())
-				userStr = userStr + "\\";
-		}
-
-		// Take MySQL Database Users and form JSON String of all of them
-		return userStr;
-	}
-	
-	public static String removeUser(String id)
-	{
-		// Go through LOGGED in Userlist and remove user (they signed off) - Must be recoded
-		for(int i = 0; i < userList.size(); i++)
-		{
-			if(userList.get(i).getId() == Integer.parseInt(id.split(" ")[1]))
-			{
-				userList.remove(i);
-				break;
-			}
-		}
-		
-		return id.split(" ")[1];
-	}
-	
 	public static void writeToAll(String message)
 	{
-		// Instead of writing to all like a chatroom, we're going to route messages to individual users like AIM
 		for(int i = 0; i < clientThreads.size(); i++)
-		{
 			clientThreads.get(i).writeToClient(message);
-		}
 	}
 	
 	public static boolean isConnected(String ip)
