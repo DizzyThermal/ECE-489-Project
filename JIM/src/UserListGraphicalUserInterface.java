@@ -72,7 +72,6 @@ public class UserListGraphicalUserInterface extends JFrame implements ActionList
 		}
  		catch (Exception e) { e.printStackTrace(); }
 
-		System.out.println("Before thread create");
 		t1 = (new Thread()
 		{
 			@Override
@@ -80,7 +79,6 @@ public class UserListGraphicalUserInterface extends JFrame implements ActionList
 			{
 				while(this.isAlive())
 				{
-					System.out.println("I am alive.");
 					String incomingMessage = "";
 					try
 					{

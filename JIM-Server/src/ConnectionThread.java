@@ -101,7 +101,7 @@ public class ConnectionThread
 	public void writeToClient(String message)
 	{
 		try {
-			bWriter.write(message);
+			bWriter.write(message + "\n");
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
