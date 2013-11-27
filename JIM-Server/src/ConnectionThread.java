@@ -3,13 +3,18 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 import javax.net.ssl.SSLSocket;
 
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+
+import com.mysql.jdbc.Connection;
+import com.mysql.jdbc.Statement;
 
 public class ConnectionThread 	 
 {
@@ -81,16 +86,24 @@ public class ConnectionThread
 		writeToClient("There was an error while attempting to login to the server!");
 	}
 	
-	public void register(int id, String username, String ip)
+	public void register(int id, String username, String ip) throws ClassNotFoundException
 	{
-		// Check DB for existing username
+		try
+		{
+			Class.forName("com.mysql.jdbc.Driver");
+			Connection conn = (Connection)DriverManager.getConnection("jdbc:mysql://localhost:3306/ece489project", Resource.MYSQL_USER, Resource.MYSQL_PASS);
+			Statement stmt = (Statement)conn.createStatement();
+			
+			String query = "SELECT * FROM users;";
+			ResultSet rs = stmt.executeQuery(query);
+			System.out.println("Hey");
+		}
+		catch(ClassNotFoundException | SQLException e) { e.printStackTrace(); }
 		
-		// Add User and Prompt about successful login
-		// TODO
-		writeToClient(username + " was successfully registered!");
-		//
-		// ELSE - User Exists
-		writeToClient(username + " is already registered!");
+		//if()
+			writeToClient(username + " was successfully registered!");
+		//else
+			writeToClient(username + " is already registered!");
 	}
 	
 	public void disconnect(int id, String username, String ip)
