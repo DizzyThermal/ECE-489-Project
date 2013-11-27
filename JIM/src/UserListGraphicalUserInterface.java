@@ -1,4 +1,5 @@
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.BufferedReader;
@@ -11,6 +12,7 @@ import java.util.ArrayList;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -26,6 +28,12 @@ public class UserListGraphicalUserInterface extends JFrame implements ActionList
 	public JPanel usersPanel = new JPanel(new BorderLayout());
 	public JScrollPane users = new JScrollPane(usersPanel);
 	public ArrayList<JTextField> userTextFields = new ArrayList<JTextField>();
+	
+	// NJP+{ Adding for temp debug
+	public JLabel tempLabel = new JLabel("Port of Client"); 
+	public JTextField remoteClientPort = new JTextField();
+	public JPanel tempRemoteClient = new JPanel();
+	// NJP+}
 	
 	public ArrayList<ChatWindowGraphicalUserInterface> connectedUsers = new ArrayList<ChatWindowGraphicalUserInterface>();
 	public ArrayList<User> userList = new ArrayList<User>();
@@ -45,7 +53,12 @@ public class UserListGraphicalUserInterface extends JFrame implements ActionList
 		
 		//((JTextArea)((JViewport)users.getComponent(0)).getView()).setEditable(false);
 		add(users, BorderLayout.CENTER);
-
+		// NJP+{ // temp debug
+		tempRemoteClient.add(tempLabel);
+		remoteClientPort.setPreferredSize(new Dimension(50,20));
+		tempRemoteClient.add(remoteClientPort);
+		add(tempRemoteClient, BorderLayout.SOUTH);
+		// NJP+}
 		JSONObject connectionJSON = new JSONObject();
 		connectionJSON.put("source", "client");
 		if(registering)
