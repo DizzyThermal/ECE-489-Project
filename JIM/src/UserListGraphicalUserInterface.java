@@ -2,8 +2,9 @@ import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 
 import javax.net.ssl.SSLSocket;
@@ -12,9 +13,7 @@ import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
 import javax.swing.JTextField;
-import javax.swing.JViewport;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.json.simple.JSONObject;
@@ -31,8 +30,10 @@ public class UserListGraphicalUserInterface extends JFrame implements ActionList
 	public ArrayList<User> userList = new ArrayList<User>();
 	
 	public SSLSocket clientSocket;
-	public PrintWriter pWriter;
-	public BufferedReader bReader;
+	//public PrintWriter pWriter;
+	public DataOutputStream pWriter;
+	//public BufferedReader bReader;
+	public DataInputStream bReader;
 
 	public Thread t1;
 	
@@ -59,13 +60,16 @@ public class UserListGraphicalUserInterface extends JFrame implements ActionList
 		try
 		{
 			clientSocket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(Resource.IP, Integer.parseInt(Resource.PORT));
-			pWriter = new PrintWriter(clientSocket.getOutputStream(), true);
-			bReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+			//pWriter = new PrintWriter(clientSocket.getOutputStream(), true);
+			pWriter = new DataOutputStream(clientSocket.getOutputStream());
+			bReader = new DataInputStream(clientSocket.getInputStream());
 			
 			System.out.println(clientSocket.isConnected());
 			System.out.println("Before print: "+connectionJSON.toJSONString());
 			System.out.println(clientSocket.getOutputStream());
-			pWriter.println(connectionJSON.toJSONString());
+			pWriter.writeBytes("Test");
+			
+			//pWriter.println(connectionJSON.toJSONString());
 			System.out.println("Just wrote to buffer");
 			
 		}
@@ -83,8 +87,10 @@ public class UserListGraphicalUserInterface extends JFrame implements ActionList
 					String incomingMessage = "";
 					try
 					{
+						/*
 						if(bReader != null && bReader.ready())
 							incomingMessage = bReader.readLine();
+					*/
 					}
 					catch(Exception e) { e.printStackTrace(); }
 					
@@ -207,7 +213,7 @@ public class UserListGraphicalUserInterface extends JFrame implements ActionList
 	public void disconnect()
 	{
 		if (pWriter != null)
-			pWriter.println("/disconnect " + id);
+			// NJP-pWriter.println("/disconnect " + id);
 		t1.stop();
 		try
 		{

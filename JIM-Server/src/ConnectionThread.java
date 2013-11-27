@@ -1,5 +1,7 @@
 import java.io.BufferedReader;
+import java.io.DataInputStream;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.io.PrintWriter;
 
 import javax.net.ssl.SSLSocket;
@@ -11,8 +13,9 @@ import org.json.simple.parser.ParseException;
 public class ConnectionThread
 {
 	Thread thread;
-	BufferedReader bReader;
-	PrintWriter pWriter;
+	DataInputStream bReader;
+	//PrintWriter pWriter;
+	PrintStream pWriter;
 	int id = -1;
 	
 	public ConnectionThread(final int id, final SSLSocket socket, final String ip)
@@ -20,8 +23,10 @@ public class ConnectionThread
 		this.id = id;
 		try
 		{
-			bReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-			pWriter = new PrintWriter(socket.getOutputStream(), true);
+			//bReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+			bReader = new DataInputStream(socket.getInputStream());
+			//pWriter = new PrintWriter(socket.getOutputStream(), true);
+			pWriter = new PrintStream(socket.getOutputStream());
 		}
 		catch(Exception e) { e.printStackTrace(); }
 		System.out.println("Socket: "+socket.isConnected());
@@ -38,7 +43,7 @@ public class ConnectionThread
 					while(!socket.isClosed())
 					{
 						//System.out.println("Inside Socket While loop");
-						if(bReader.ready())
+						//if(bReader.ready()) // NJP-
 						{
 							System.out.println("Breader is ready");
 							String clientMessage = bReader.readLine();
