@@ -1,9 +1,7 @@
 Process
-1. Send messge to server to request connection
-2. Server forwards request to other client
-3. Remote client responds to server with available port
-4. Server forwards port to requester
-5. Requester opens server socket, alerts mgmt server
-6. Server tells remote client to start client side
-7. Remote client opens client side connection
-8. P2P connection established
+1. Client gets random port #
+2. Client creates server socket on port
+3. client sends link request to server with port# and remote client id
+4. Server sends client connection_request with port# and requester client id
+5. Client creates client socket
+6. P2P connection established
