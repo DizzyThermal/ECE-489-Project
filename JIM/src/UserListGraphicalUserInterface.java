@@ -2,8 +2,11 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
@@ -11,6 +14,7 @@ import java.util.ArrayList;
 
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
+import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -32,6 +36,7 @@ public class UserListGraphicalUserInterface extends JFrame implements ActionList
 	// NJP+{ Adding for temp debug
 	public JLabel tempLabel = new JLabel("Port of Client"); 
 	public JTextField remoteClientPort = new JTextField();
+	public JButton connectToClient = new JButton("Connect");
 	public JPanel tempRemoteClient = new JPanel();
 	// NJP+}
 	
@@ -39,7 +44,7 @@ public class UserListGraphicalUserInterface extends JFrame implements ActionList
 	public ArrayList<User> userList = new ArrayList<User>();
 	
 	public SSLSocket clientSocket;
-	public PrintWriter pWriter;
+	public BufferedWriter bWriter;
 	public BufferedReader bReader;
 
 	public Thread t1;
@@ -57,6 +62,8 @@ public class UserListGraphicalUserInterface extends JFrame implements ActionList
 		tempRemoteClient.add(tempLabel);
 		remoteClientPort.setPreferredSize(new Dimension(50,20));
 		tempRemoteClient.add(remoteClientPort);
+		connectToClient.addActionListener(this);
+		tempRemoteClient.add(connectToClient);
 		add(tempRemoteClient, BorderLayout.SOUTH);
 		// NJP+}
 		JSONObject connectionJSON = new JSONObject();
@@ -68,6 +75,8 @@ public class UserListGraphicalUserInterface extends JFrame implements ActionList
 		connectionJSON.put("username", Resource.USERNAME);
 		connectionJSON.put("password", DigestUtils.md5Hex(Resource.PASSWORD));
 
+		this.addWindowListener(mWindowListener);
+		
 		System.out.println("Before Try");
 		try
 		{
@@ -123,6 +132,22 @@ public class UserListGraphicalUserInterface extends JFrame implements ActionList
 							else if(action.equals("message"))
 								JOptionPane.showMessageDialog(null, (String)incomingJSON.get("serverMessageTitle"), (String)incomingJSON.get("serverMessage"), JOptionPane.DEFAULT_OPTION);
 						}
+						else if(incomingJSON.get("source").equals("client_port")){
+							// Current connections have already been checked. 
+							// Need to create a new connection/window
+							ChatWindowGraphicalUserInterface cwGUI = new ChatWindowGraphicalUserInterface(
+									Integer.parseInt((String)incomingJSON.get("userId")), 
+									getUserNameById(Integer.parseInt((String)incomingJSON.get("userId"))), 
+									getIpById(Integer.parseInt((String)incomingJSON.get("userId"))), 
+									Integer.parseInt((String)incomingJSON.get("port"))
+									);
+							cwGUI.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+							cwGUI.setSize(300, 600);
+							cwGUI.setResizable(true);
+							cwGUI.setVisible(true);	
+							connectedUsers.add(cwGUI);
+						}
+						/*
 						else if(incomingJSON.get("source").equals("client"))
 						{
 							int clientIndex = checkConnection(Integer.parseInt((String)incomingJSON.get("userId"))); 
@@ -139,6 +164,7 @@ public class UserListGraphicalUserInterface extends JFrame implements ActionList
 								connectedUsers.get(clientIndex).append((String)incomingJSON.get("message"));
 							}
 						}
+						*/
 					}
 					else{
 						System.out.println("User List Graphical User Interface will not be loaded.");
@@ -218,13 +244,22 @@ public class UserListGraphicalUserInterface extends JFrame implements ActionList
 	
 	public void disconnect()
 	{
-		if (pWriter != null)
-			pWriter.println("/disconnect " + id);
+		System.out.println("Sending Disconnect to Server.");
+		JSONObject json = null;
+		if (bWriter != null){
+			json = new JSONObject();
+			json.put("source", "client");
+			json.put("action", "disconnect");
+			try {
+				bWriter.write(json.toJSONString()+"\n");
+				bWriter.flush();
+			} catch (IOException e1) { e1.printStackTrace(); }
+		}
 		t1.stop();
 		try
 		{
 			bReader.close();
-			pWriter.close();
+			bWriter.close();
 			clientSocket.close();
 			
 		}
@@ -264,6 +299,82 @@ public class UserListGraphicalUserInterface extends JFrame implements ActionList
 	@Override
 	public void actionPerformed(ActionEvent e) 
 	{
-		
+		// Check if we are already connected
+		ChatWindowGraphicalUserInterface tmp = (ChatWindowGraphicalUserInterface)e.getSource();
+		if(checkConnection(tmp.id) != -1){
+			System.out.println("Already connected to user "+tmp.id);
+		}
+		else{
+			connectToUser(tmp.id);
+		}
 	}
+	
+	public void connectToUser(int id){
+		// Process
+		// 1. Send messge to server to request connection
+		// 2. Server forwards request to other client
+		// 3. Remote client responds to server with available port
+		// 4. Server forwards port to requester
+		// 5. Requester opens server socket, alerts mgmt server
+		// 6. Server tells remote client to start client side
+		// 7. Remote client opens client side connection
+		// 8. P2P connection established
+		
+		// Here we do #1
+		JSONObject json = new JSONObject();
+		json.put("source", "client");
+		json.put("action", "link");
+		json.put("remoteUserId", id);
+		try {
+			bWriter.write(json.toJSONString()+"\n");
+			bWriter.flush();
+		} catch (IOException e) { e.printStackTrace(); }
+		
+
+	}
+	
+	WindowListener mWindowListener = new WindowListener(){
+
+		@Override
+		public void windowActivated(WindowEvent e) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void windowClosed(WindowEvent e) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void windowClosing(WindowEvent e) {
+			disconnect();
+		}
+
+		@Override
+		public void windowDeactivated(WindowEvent e) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void windowDeiconified(WindowEvent e) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void windowIconified(WindowEvent e) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void windowOpened(WindowEvent e) {
+			// TODO Auto-generated method stub
+			
+		}
+		
+	};
 }

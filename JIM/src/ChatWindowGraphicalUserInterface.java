@@ -17,8 +17,9 @@ public class ChatWindowGraphicalUserInterface extends JFrame implements KeyListe
 	public int id;
 	public String username;
 	public String ip;
+	public int port;
 	
-	ChatWindowGraphicalUserInterface(int id, String username, String ip)
+	ChatWindowGraphicalUserInterface(int id, String username, String ip, int port)
 	{
 		super(username);
 		setLayout(new BorderLayout());
@@ -26,6 +27,7 @@ public class ChatWindowGraphicalUserInterface extends JFrame implements KeyListe
 		this.id = id;
 		this.username = username;
 		this.ip = ip;
+		this.port = port;
 		
 		createPanel();
 		messageArea.setEditable(false);
@@ -33,6 +35,7 @@ public class ChatWindowGraphicalUserInterface extends JFrame implements KeyListe
 		// Create Socket Connection
 	}
 	
+	/*
 	ChatWindowGraphicalUserInterface(int id, String username, String ip, String message)
 	{
 		super(username);
@@ -47,6 +50,7 @@ public class ChatWindowGraphicalUserInterface extends JFrame implements KeyListe
 		
 		// Create Socket Connection
 	}
+	*/
 	
 	public void createPanel()
 	{
