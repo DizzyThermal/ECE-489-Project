@@ -1,0 +1,10 @@
+When Client sends message with:
+    source = client
+    action = link
+    remoteUserId = user to connect to
+Server should..
+  Send message to remoteUserId with:
+    source = server
+    action = portRequest
+    
+  
