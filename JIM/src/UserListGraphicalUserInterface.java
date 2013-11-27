@@ -46,7 +46,8 @@ public class UserListGraphicalUserInterface extends JFrame implements ActionList
 	public SSLSocket clientSocket;
 	public BufferedWriter bWriter;
 	public BufferedReader bReader;
-
+	public ArrayList<Integer> portList = new ArrayList<Integer>();
+	
 	public Thread t1;
 	
 	public int id = -1;
@@ -295,6 +296,16 @@ public class UserListGraphicalUserInterface extends JFrame implements ActionList
 		
 		return null;
 	}
+
+	// get random port above 50,000
+	public int getRandomPort(){
+		int randomPort = (int)(Math.random()/2)*100000+50000;
+		while(portList.contains(randomPort)){
+			randomPort = (int)(Math.random()/2)*100000+50000;
+		}
+		portList.add(randomPort);
+		return randomPort;
+	}
 	
 	@Override
 	public void actionPerformed(ActionEvent e) 
@@ -325,10 +336,12 @@ public class UserListGraphicalUserInterface extends JFrame implements ActionList
 		json.put("source", "client");
 		json.put("action", "link");
 		json.put("remoteUserId", id);
+		json.put("port", getRandomPort());
 		try {
 			bWriter.write(json.toJSONString()+"\n");
 			bWriter.flush();
 		} catch (IOException e) { e.printStackTrace(); }
+		
 		
 
 	}
