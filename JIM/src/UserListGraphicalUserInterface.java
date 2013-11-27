@@ -83,7 +83,7 @@ public class UserListGraphicalUserInterface extends JFrame implements ActionList
 		{
 			clientSocket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(Resource.IP, Integer.parseInt(Resource.PORT));
 			clientSocket.setEnabledCipherSuites(clientSocket.getSupportedCipherSuites());
-			BufferedWriter bWriter = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
+			bWriter = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
 			bReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 			System.out.println(clientSocket.isConnected());
 			System.out.println("Before print: "+connectionJSON.toJSONString());
@@ -133,6 +133,7 @@ public class UserListGraphicalUserInterface extends JFrame implements ActionList
 							else if(action.equals("message"))
 								JOptionPane.showMessageDialog(null, (String)incomingJSON.get("serverMessageTitle"), (String)incomingJSON.get("serverMessage"), JOptionPane.DEFAULT_OPTION);
 						}
+						/*
 						else if(incomingJSON.get("source").equals("client_port")){
 							// Current connections have already been checked. 
 							// Need to create a new connection/window
@@ -148,6 +149,7 @@ public class UserListGraphicalUserInterface extends JFrame implements ActionList
 							cwGUI.setVisible(true);	
 							connectedUsers.add(cwGUI);
 						}
+						*/
 						/*
 						else if(incomingJSON.get("source").equals("client"))
 						{
@@ -299,7 +301,7 @@ public class UserListGraphicalUserInterface extends JFrame implements ActionList
 
 	// get random port above 50,000
 	public int getRandomPort(){
-		int randomPort = (int)(Math.random()/2)*100000+50000;
+		int randomPort = (int)(Math.random()/2*100000)+50000;
 		while(portList.contains(randomPort)){
 			randomPort = (int)(Math.random()/2)*100000+50000;
 		}
@@ -310,6 +312,10 @@ public class UserListGraphicalUserInterface extends JFrame implements ActionList
 	@Override
 	public void actionPerformed(ActionEvent e) 
 	{
+		if(e.getSource() == connectToClient){
+			connectToUser(12345);
+			return;
+		}
 		// Check if we are already connected
 		ChatWindowGraphicalUserInterface tmp = (ChatWindowGraphicalUserInterface)e.getSource();
 		if(checkConnection(tmp.id) != -1){
@@ -322,27 +328,42 @@ public class UserListGraphicalUserInterface extends JFrame implements ActionList
 	
 	public void connectToUser(int id){
 		// Process
-		// 1. Send messge to server to request connection
-		// 2. Server forwards request to other client
-		// 3. Remote client responds to server with available port
-		// 4. Server forwards port to requester
-		// 5. Requester opens server socket, alerts mgmt server
-		// 6. Server tells remote client to start client side
-		// 7. Remote client opens client side connection
-		// 8. P2P connection established
+		// 1. Client gets random port #
+		// 2. Client creates server socket on port
+		// 3. client sends link request to server with port# and remote client id
+		// 4. Server sends client connection_request with port# and requester client id
+		// 5. Client creates client socket
+		// 6. P2P connection established
 		
-		// Here we do #1
+		// 1. Client gets random port #
+		int port = getRandomPort();
+		
+		// 2. Client creates server socket on port
+		ChatWindowGraphicalUserInterface cwGUI = new ChatWindowGraphicalUserInterface(
+				id, 
+				getUserNameById(id), 
+				getIpById(id), 
+				port,
+				Resource.SERVER
+				);
+		cwGUI.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		cwGUI.setSize(300, 600);
+		cwGUI.setResizable(true);
+		cwGUI.setVisible(true);	
+		connectedUsers.add(cwGUI);
+		
+		// 3. client sends link request to server with port# and remote client id
+		
 		JSONObject json = new JSONObject();
 		json.put("source", "client");
 		json.put("action", "link");
 		json.put("remoteUserId", id);
 		json.put("port", getRandomPort());
+		System.out.println(json.toJSONString());
 		try {
 			bWriter.write(json.toJSONString()+"\n");
 			bWriter.flush();
 		} catch (IOException e) { e.printStackTrace(); }
-		
-		
 
 	}
 	

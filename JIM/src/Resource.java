@@ -10,6 +10,9 @@ public class Resource
 	public static String USERNAME					= getUsername();
 	public static String PASSWORD					= "";
 	
+	public static String CLIENT						= "client";
+	public static String SERVER						= "server";
+	
 	public static String getUsername()
 	{
 		return System.getProperty("user.name");
