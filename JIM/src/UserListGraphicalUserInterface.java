@@ -35,13 +35,6 @@ public class UserListGraphicalUserInterface extends JFrame implements ActionList
 	public JScrollPane users = new JScrollPane(usersPanel);
 	public ArrayList<JLabel> userLabels = new ArrayList<JLabel>();
 	
-	// NJP+{ Adding for temp debug
-	public JLabel tempLabel = new JLabel("Port of Client"); 
-	public JTextField remoteClientPort = new JTextField();
-	public JButton connectToClient = new JButton("Connect");
-	public JPanel tempRemoteClient = new JPanel();
-	// NJP+}
-	
 	public ArrayList<ChatWindowGraphicalUserInterface> connectedUsers = new ArrayList<ChatWindowGraphicalUserInterface>();
 	public ArrayList<User> userList = new ArrayList<User>();
 	
@@ -61,14 +54,7 @@ public class UserListGraphicalUserInterface extends JFrame implements ActionList
 		
 		//((JTextArea)((JViewport)users.getComponent(0)).getView()).setEditable(false);
 		add(users, BorderLayout.CENTER);
-		// NJP+{ // temp debug
-		tempRemoteClient.add(tempLabel);
-		remoteClientPort.setPreferredSize(new Dimension(50,20));
-		tempRemoteClient.add(remoteClientPort);
-		connectToClient.addActionListener(this);
-		tempRemoteClient.add(connectToClient);
-		add(tempRemoteClient, BorderLayout.SOUTH);
-		// NJP+}
+		
 		JSONObject connectionJSON = new JSONObject();
 		connectionJSON.put("source", "client");
 		if(registering)
@@ -188,23 +174,39 @@ public class UserListGraphicalUserInterface extends JFrame implements ActionList
 	public void addUser(int id, String username, String ip)
 	{
 		int index = -1;
+		System.out.println("Adding user");
+		if(username.equals(Resource.USERNAME))
+			return;
 		for(int i = 0; i < userList.size(); i++)
 		{
-			if(!(username.compareTo(userList.get(i).getName()) > 0))
+			if(id == userList.get(i).getId())
 			{
 				index = i;
 				break;
 			}
 		}
+		System.out.println("Index: "+index);
 		
-		if(index > 0)
+		if(index == -1) // user not found, adding...
 		{
+		/*
+			JSONObject jsonObj = (JSONObject)json.get(i);
+			userList.add(new User((int)(long)jsonObj.get("userId"), (String)jsonObj.get("userName"), (String)jsonObj.get("userIp")));
+			JLabel jL = new JLabel((String)jsonObj.get("userName"));
+			jL.addMouseListener(this);
+			userLabels.add(jL);
+			usersPanel.add(jL);
+			
+			System.out.println("Adding user "+username);
+			index = userList.size();
 			userList.add(index, new User(id, username, ip));
 			JLabel jL = new JLabel(username);
 			jL.addMouseListener(this);
 			userLabels.add(index, jL);
 			usersPanel.add(jL, index);
+			*/
 		}
+		
 	}
 	
 	public void removeUser(int id)
@@ -230,6 +232,7 @@ public class UserListGraphicalUserInterface extends JFrame implements ActionList
 	public void updateUsers(JSONArray json)
 	{
 		usersPanel.removeAll();
+		System.out.println("Updating User List");
 		for(int i = 0; i < json.size(); i++)
 		{
 			JSONObject jsonObj = (JSONObject)json.get(i);
@@ -319,10 +322,6 @@ public class UserListGraphicalUserInterface extends JFrame implements ActionList
 	@Override
 	public void actionPerformed(ActionEvent e) 
 	{
-		if(e.getSource() == connectToClient){
-			connectToUser(12345);
-			return;
-		}
 		// Check if we are already connected
 		ChatWindowGraphicalUserInterface tmp = (ChatWindowGraphicalUserInterface)e.getSource();
 		if(checkConnection(tmp.id) != -1){
@@ -378,6 +377,7 @@ public class UserListGraphicalUserInterface extends JFrame implements ActionList
 	public void mouseClicked(MouseEvent e)
 	{
 		// TODO - Open Chat
+		System.out.println("About to try to connect to "+((JLabel)e.getSource()).getText());
 	}
 
 	@Override

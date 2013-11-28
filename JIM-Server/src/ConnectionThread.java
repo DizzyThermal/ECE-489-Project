@@ -62,7 +62,8 @@ public class ConnectionThread
 							if(action.equals("connect"))
 								connect(id, (String)incomingJSON.get("userName"), (String)incomingJSON.get("password"), socket.getInetAddress().toString());
 							else if(action.equals("register"))
-								register((String)incomingJSON.get("userName"), (String)incomingJSON.get("password"));
+								if(register((String)incomingJSON.get("userName"), (String)incomingJSON.get("password")))
+									connect(id, (String)incomingJSON.get("userName"), (String)incomingJSON.get("password"), socket.getInetAddress().toString());
 							else if(action.equals("disconnect"))
 								disconnect(id);
 						}
@@ -108,16 +109,7 @@ public class ConnectionThread
 				if(dbPasswords.get(i).equals(password))
 				{
 					sendUserListToClient();
-					
-					for(int j = 0; j < Main.userList.size(); j++)
-					{
-						if(Main.userList.get(i).getName().compareTo(username) > 0)
-						{
-							Main.userList.add(new User(id, username, ip));
-							System.out.println("\"" + username + "\" has logged in!");
-							return;
-						}
-					}
+					sendUserToClients(id, username, ip);
 					
 					Main.userList.add(new User(id, username, ip));
 					System.out.println("\"" + username + "\" has logged in!");
@@ -137,7 +129,7 @@ public class ConnectionThread
 		writeToClient(json.toJSONString()+"\n");
 	}
 	
-	public void register(String username, String password) throws ClassNotFoundException
+	public boolean register(String username, String password) throws ClassNotFoundException
 	{
 		ArrayList<String> dbUsernames = new ArrayList<String>();
 		try
@@ -180,11 +172,13 @@ public class ConnectionThread
 
 			json.put("result", "success");
 			writeToClient(json.toJSONString()+"\n");
+			return true;
 		}
 		else
 		{
 			json.put("result", "fail");
 			writeToClient(json.toJSONString()+"\n");
+			return false;
 		}
 	}
 	
@@ -230,9 +224,19 @@ public class ConnectionThread
 			
 			connectionJSON.add(JSON);
 		}
-		
-		Main.writeToAll(connectionJSON.toJSONString());
+		writeToClient(connectionJSON.toJSONString());
 	}
-	
+
+	public void sendUserToClients(int id, String uname, String ip)
+	{
+		JSONObject JSON = new JSONObject();
+		JSON.put("source", "server");
+		JSON.put("action", "addUser");
+		JSON.put("userId", Integer.toString(id));
+		JSON.put("userName", uname);
+		JSON.put("userIp", ip);
+		Main.writeToAll(JSON.toJSONString());
+		
+	}
 	public int getId() { return id; }
 }

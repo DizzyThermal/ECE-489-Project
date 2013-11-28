@@ -55,7 +55,6 @@ public class ConnectionGraphicalUserInterface extends JFrame implements ActionLi
 		passwordLabel.setPreferredSize(new Dimension(250, 20));
 		mainPanel.add(passwordLabel);
 		password.setPreferredSize(new Dimension(250, 20));
-		password.setText(Resource.IP);
 		password.addKeyListener(this);
 		mainPanel.add(password);
 		
