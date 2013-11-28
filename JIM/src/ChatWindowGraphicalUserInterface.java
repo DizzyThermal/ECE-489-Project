@@ -37,46 +37,63 @@ public class ChatWindowGraphicalUserInterface extends JFrame implements KeyListe
 	public static SSLSocket clientSocket;
 	public BufferedWriter bWriter;
 	public BufferedReader bReader;
+	public Thread thread;
 	
 	
-	ChatWindowGraphicalUserInterface(int id, String username, String ip, int port, String side)
+	ChatWindowGraphicalUserInterface(int _id, String _username, String _ip, int _port, final String side)
 	{
-		super(username);
 		setLayout(new BorderLayout());
-		
-		this.id = id;
-		this.username = username;
-		this.ip = ip;
-		this.port = port;
-		
+		System.out.println("ChatWindowGraphicalUserInterface Entry Point");
+		id = _id;
+		username = _username;
+		ip = _ip;
+		port = _port;
+
+		System.out.println("Calling create panel");
 		createPanel();
 		messageArea.setEditable(false);
-		
-		// Create Socket Connection
-		if(side.equals(Resource.SERVER)){
-			// Create the server side of the connection
-			try
-			{
-				serverSocket = (SSLServerSocket) SSLServerSocketFactory.getDefault().createServerSocket(this.port);
-				connectedServerSocket = (SSLSocket)serverSocket.accept();
-				serverSocket.setEnabledCipherSuites(connectedServerSocket.getSupportedCipherSuites());
-				bWriter = new BufferedWriter(new OutputStreamWriter(connectedServerSocket.getOutputStream()));
-				bReader = new BufferedReader(new InputStreamReader(connectedServerSocket.getInputStream()));
-			}
-			catch (Exception e) { e.printStackTrace(); }
 
-			System.out.println("Listening on Port: " + this.port);
-		}
-		else{
-			// Create client side of connection
-			try {
-				clientSocket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(ip, port);
-				clientSocket.setEnabledCipherSuites(clientSocket.getSupportedCipherSuites());
-				bWriter = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
-				bReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-			} catch (Exception e) { e.printStackTrace(); }
-			
-		}
+		System.out.println("Creating socket");
+		// Create Socket Connection
+		thread = new Thread(){
+			@Override
+			public void run(){
+				if(side.equals(Resource.SERVER)){
+					// Create the server side of the connection
+					try
+					{
+						System.out.println("Creating Server Side "+ip+" "+port);
+						System.out.println("SSL Server Setup");
+						serverSocket = (SSLServerSocket) SSLServerSocketFactory.getDefault().createServerSocket(port);
+						System.out.println("SSL Server wait for accept");
+						connectedServerSocket = (SSLSocket)serverSocket.accept();
+						System.out.println("Cipher Suites");
+						serverSocket.setEnabledCipherSuites(connectedServerSocket.getSupportedCipherSuites());
+						System.out.println("SSL Server Streams");
+						bWriter = new BufferedWriter(new OutputStreamWriter(connectedServerSocket.getOutputStream()));
+						bReader = new BufferedReader(new InputStreamReader(connectedServerSocket.getInputStream()));
+					}
+					catch (Exception e) { e.printStackTrace(); }
+		
+					System.out.println("Listening on Port: " + port);
+				}
+				else{
+					// Create client side of connection
+					try {
+						sleep(1000);
+						System.out.println("Creating Client Side "+ip+" "+port);
+						clientSocket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(ip, port);
+						System.out.println("Setting Cipher Suites");
+						clientSocket.setEnabledCipherSuites(clientSocket.getSupportedCipherSuites());
+						System.out.println("SSL client streams");
+						bWriter = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
+						bReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+					} catch (Exception e) { e.printStackTrace(); }
+					
+				}
+			}
+		};
+		thread.start();
 	}
 	
 	

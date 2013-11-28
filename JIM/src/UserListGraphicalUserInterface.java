@@ -127,6 +127,13 @@ public class UserListGraphicalUserInterface extends JFrame implements ActionList
 									if(!incomingJSON.get("result").equals("success"))
 										System.exit(1);
 								}
+								else if(action.equals("p2p_request")){
+									createClientChatWindow(
+											Integer.parseInt((String)incomingJSON.get("initiatorId")),
+											(String)incomingJSON.get("initiatorIP"),
+											Integer.parseInt((String)incomingJSON.get("initiatorPort"))
+											);
+								}
 							}
 							/*
 							else if(incomingJSON.get("source").equals("client_port")){
@@ -295,7 +302,19 @@ public class UserListGraphicalUserInterface extends JFrame implements ActionList
 		
 		return null;
 	}
-	
+
+	public int getIdByUserName(String uname)
+	{
+		for(int i = 0; i < userList.size(); i++)
+		{
+			if(userList.get(i).getName().equals(uname))
+			{
+				return userList.get(i).getId();
+			}
+		}
+		
+		return -1;
+	}	
 	public String getIpById(int id)
 	{
 		for(int i = 0; i < userList.size(); i++)
@@ -309,11 +328,11 @@ public class UserListGraphicalUserInterface extends JFrame implements ActionList
 		return null;
 	}
 
-	// get random port above 50,000
+	// get random port from 50000-65536
 	public int getRandomPort(){
-		int randomPort = (int)(Math.random()/2*100000)+50000;
+		int randomPort = (int)(Math.random()*15536)+50000;
 		while(portList.contains(randomPort)){
-			randomPort = (int)(Math.random()/2)*100000+50000;
+			randomPort = (int)(Math.random()*15536)+50000;
 		}
 		portList.add(randomPort);
 		return randomPort;
@@ -340,9 +359,11 @@ public class UserListGraphicalUserInterface extends JFrame implements ActionList
 		// 4. Server sends client connection_request with port# and requester client id
 		// 5. Client creates client socket
 		// 6. P2P connection established
-		
+
+		System.out.println("ConnectToUser Entry Point");
 		// 1. Client gets random port #
 		int port = getRandomPort();
+		System.out.println("P2P Port"+' '+port+" selected");
 		
 		// 2. Client creates server socket on port
 		ChatWindowGraphicalUserInterface cwGUI = new ChatWindowGraphicalUserInterface(
@@ -357,27 +378,48 @@ public class UserListGraphicalUserInterface extends JFrame implements ActionList
 		cwGUI.setResizable(true);
 		cwGUI.setVisible(true);	
 		connectedUsers.add(cwGUI);
-		
+		System.out.println("Created chat window GUI");
 		// 3. client sends link request to server with port# and remote client id
 		
 		JSONObject json = new JSONObject();
 		json.put("source", "client");
 		json.put("action", "link");
-		json.put("remoteUserId", id);
-		json.put("port", getRandomPort());
+		json.put("remoteUserId", Integer.toString(id));
+		json.put("port", Integer.toString(port));
 		System.out.println(json.toJSONString());
 		try {
 			bWriter.write(json.toJSONString()+"\n");
 			bWriter.flush();
 		} catch (IOException e) { e.printStackTrace(); }
-
+		System.out.println("Sent link request to server");
 	}
-
+	
+	public void createClientChatWindow(int id, String ip, int port){
+		
+		ChatWindowGraphicalUserInterface cwGUI = new ChatWindowGraphicalUserInterface(
+				id, 
+				getUserNameById(id), 
+				ip.substring(1), // remove slash 
+				port,
+				Resource.CLIENT
+				);
+		cwGUI.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		cwGUI.setSize(300, 600);
+		cwGUI.setResizable(true);
+		cwGUI.setVisible(true);	
+		connectedUsers.add(cwGUI);
+		System.out.println("Created chat window GUI");
+		
+	}
+	
 	@Override
 	public void mouseClicked(MouseEvent e)
 	{
 		// TODO - Open Chat
-		System.out.println("About to try to connect to "+((JLabel)e.getSource()).getText());
+		String uname = ((JLabel)e.getSource()).getText();
+		int id = getIdByUserName(uname);
+		System.out.println("About to try to connect to "+uname+" id: "+id);
+		connectToUser(id);
 	}
 
 	@Override

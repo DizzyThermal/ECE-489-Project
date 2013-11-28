@@ -49,6 +49,7 @@ public class ConnectionThread
 					while(!socket.isClosed())
 					{
 						String clientMessage = bReader.readLine();
+						System.out.println(clientMessage);
 						if (clientMessage != null)
 						{
 							JSONObject incomingJSON = null;
@@ -59,13 +60,23 @@ public class ConnectionThread
 							catch(ParseException pe) { pe.printStackTrace(); }
 							
 							String action = (String)incomingJSON.get("action");
+							System.out.println("Action: "+action);
 							if(action.equals("connect"))
 								connect(id, (String)incomingJSON.get("userName"), (String)incomingJSON.get("password"), socket.getInetAddress().toString());
-							else if(action.equals("register"))
+							else if(action.equals("register")){
 								if(register((String)incomingJSON.get("userName"), (String)incomingJSON.get("password")))
 									connect(id, (String)incomingJSON.get("userName"), (String)incomingJSON.get("password"), socket.getInetAddress().toString());
+							}
 							else if(action.equals("disconnect"))
 								disconnect(id);
+							else if(action.equals("link")){
+								System.out.println("Link Request Received.");
+								sendLinkRequest(
+										Integer.parseInt((String)incomingJSON.get("remoteUserId")),
+										socket.getInetAddress().toString(), 
+										Integer.parseInt((String)incomingJSON.get("port"))
+										);
+							}
 						}
 					}
 				}
@@ -193,7 +204,7 @@ public class ConnectionThread
 				JSONObject connectionJSON = new JSONObject();
 				connectionJSON.put("source", "server");
 				connectionJSON.put("action", "removeUser");
-				connectionJSON.put("userId", id);
+				connectionJSON.put("userId", Integer.toString(id));
 				Main.writeToAll(connectionJSON.toJSONString());
 				
 				thread.stop();
@@ -239,4 +250,35 @@ public class ConnectionThread
 		
 	}
 	public int getId() { return id; }
+	
+	public void sendLinkRequest(int targetId, String ip, int port){
+		System.out.println("SendLinkRequest Entry Point");
+		JSONObject JSON = new JSONObject();
+		JSON.put("source", "server");
+		JSON.put("action", "p2p_request");
+		JSON.put("initiatorId", Integer.toString(id));
+		JSON.put("initiatorIP", ip);
+		JSON.put("initiatorPort", Integer.toString(port));
+		System.out.println("Search for client");
+		// find client we want to send request to
+		ConnectionThread tmp = null;
+		Boolean found = false;
+		for(int i = 0; i < Main.clientThreads.size(); i++){
+			tmp = Main.clientThreads.get(i);
+			if(tmp.id == targetId){
+				found = true;
+				break;
+			}
+		}
+		if(found == false){
+			System.out.println("Target client in P2P not found. ID = "+targetId);
+			return;
+		}
+		System.out.println("Found client, sending P2P request");
+		if(tmp != null)
+			tmp.writeToClient(JSON.toJSONString());
+		else
+			System.out.println("No connection threads available.");
+	}
+	
 }
