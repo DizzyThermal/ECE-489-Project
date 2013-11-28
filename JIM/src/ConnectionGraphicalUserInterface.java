@@ -60,8 +60,10 @@ public class ConnectionGraphicalUserInterface extends JFrame implements ActionLi
 		mainPanel.add(password);
 		
 		mainPanel.add(loginButton);
+		mainPanel.add(registerButton);
 		mainPanel.addKeyListener(this);
 		loginButton.addActionListener(this);
+		registerButton.addActionListener(this);
 	}
 	
 	public void login()

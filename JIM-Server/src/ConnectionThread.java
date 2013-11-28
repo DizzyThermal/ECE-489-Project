@@ -78,6 +78,11 @@ public class ConnectionThread
 	{
 		ArrayList<String> dbUsernames = new ArrayList<String>();
 		ArrayList<String> dbPasswords = new ArrayList<String>();
+
+		JSONObject json = new JSONObject();
+		json.put("source", "server");
+		json.put("action", "register");
+		
 		try
 		{
 			Class.forName("com.mysql.jdbc.Driver");
@@ -118,13 +123,18 @@ public class ConnectionThread
 					System.out.println("\"" + username + "\" has logged in!");
 				}
 				else
-					writeToClient("The password entered is incorrect!");
-				
+				{
+					System.out.print(username+" password was incorrect");
+					json.put("result", "fail");
+					writeToClient(json.toJSONString()+"\n");
+				}
 				return;
 			}
 		}
-		
-		writeToClient("\"" + username + "\" is not registered!");
+
+		System.out.print(username+" was not registered");
+		json.put("result", "fail");
+		writeToClient(json.toJSONString()+"\n");
 	}
 	
 	public void register(String username, String password) throws ClassNotFoundException
@@ -147,6 +157,11 @@ public class ConnectionThread
 		}
 		catch(ClassNotFoundException | SQLException e) { e.printStackTrace(); }
 		
+
+		JSONObject json = new JSONObject();
+		json.put("source", "server");
+		json.put("action", "register");
+		
 		if(!dbUsernames.contains(username))
 		{
 			try
@@ -155,17 +170,22 @@ public class ConnectionThread
 				Connection conn = (Connection)DriverManager.getConnection("jdbc:mysql://localhost:3306/ece489project", Resource.MYSQL_USER, Resource.MYSQL_PASS);
 				Statement stmt = (Statement)conn.createStatement();
 				
-				String query = "INSERT INTO users VALUES(" + username + ", " + password + ")";
-				stmt.executeQuery(query);
+				String query = "INSERT INTO users VALUES(\"" + username + "\", \"" + password + "\")";
+				stmt.executeUpdate(query);
 				
 				stmt.close();
 				conn.close();
 			}
 			catch(ClassNotFoundException | SQLException e) { e.printStackTrace(); }
-			writeToClient(username + " was successfully registered!");
+
+			json.put("result", "success");
+			writeToClient(json.toJSONString()+"\n");
 		}
 		else
-			writeToClient(username + " is already registered!");
+		{
+			json.put("result", "fail");
+			writeToClient(json.toJSONString()+"\n");
+		}
 	}
 	
 	public void disconnect(int id)

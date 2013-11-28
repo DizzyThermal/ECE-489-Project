@@ -114,7 +114,7 @@ public class UserListGraphicalUserInterface extends JFrame implements ActionList
 					{
 						JSONObject incomingJSON = null;
 						JSONArray incomingJSONArray = null;
-						
+						System.out.println(incomingMessage);
 						try
 						{
 							if((incomingMessage.charAt(0) == '[') && (incomingMessage.charAt(incomingMessage.length()-1) == ']'))
@@ -137,6 +137,10 @@ public class UserListGraphicalUserInterface extends JFrame implements ActionList
 									removeUser(Integer.parseInt((String)incomingJSON.get("userId")));
 								else if(action.equals("message"))
 									JOptionPane.showMessageDialog(null, (String)incomingJSON.get("serverMessageTitle"), (String)incomingJSON.get("serverMessage"), JOptionPane.DEFAULT_OPTION);
+								else if(action.equals("register")){
+									if(!incomingJSON.get("result").equals("success"))
+										System.exit(1);
+								}
 							}
 							/*
 							else if(incomingJSON.get("source").equals("client_port")){
