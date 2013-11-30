@@ -102,5 +102,8 @@ public class ChatWindowGraphicalUserInterface extends JFrame implements KeyListe
 	public void windowIconified(WindowEvent e) {}
 
 	@Override
-	public void windowOpened(WindowEvent e) {}
+	public void windowOpened(WindowEvent e)
+	{
+		messageField.requestFocus();
+	}
 }

@@ -223,7 +223,7 @@ public class ConnectionThread
 				
 				JSONObject connectionJSON = new JSONObject();
 				connectionJSON.put("action", "removeUser");
-				connectionJSON.put("userId", Integer.toString(id));
+				connectionJSON.put("userId", id);
 				Main.writeToAll(connectionJSON.toJSONString());
 				
 				thread.stop();
@@ -257,7 +257,7 @@ public class ConnectionThread
 				json.put("userMessage", message);
 				json.put("userName", getUserNameById(this.id));
 				json.put("senderId", this.id);
-				Main.clientThreads.get(i).writeToClient(json.toJSONString());
+				Main.clientThreads.get(getIndexFromId(id)).writeToClient(json.toJSONString());
 			}
 		}
 	}
@@ -271,6 +271,17 @@ public class ConnectionThread
 		}
 		
 		return null;
+	}
+	
+	public int getIndexFromId(int id)
+	{
+		for(int i = 0; i < Main.clientThreads.size(); i++)
+		{
+			if(Main.clientThreads.get(i).getId() == id)
+				return i;
+		}
+		
+		return -1;
 	}
 	
 	public String makeJSONMessage(String message, int messageType)
