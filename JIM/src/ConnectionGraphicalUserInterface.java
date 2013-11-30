@@ -119,7 +119,9 @@ public class ConnectionGraphicalUserInterface extends JFrame implements ActionLi
 				@Override
 				public void run()
 				{
-					while(!clientSocket.isClosed())
+					boolean connected = false;
+					
+					while(!clientSocket.isClosed() || !connected)
 					{
 						String incomingMessage = null;
 						try
@@ -146,6 +148,7 @@ public class ConnectionGraphicalUserInterface extends JFrame implements ActionLi
 				                go.setVisible(true);
 				                
 				                setVisible(false);
+				                connected = true;
 							}
 							else // Registering
 								JOptionPane.showMessageDialog(null, (String)incomingJSON.get("serverMessage"), "JIM", Integer.parseInt((String)incomingJSON.get("type")));

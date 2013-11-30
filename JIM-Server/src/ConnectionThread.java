@@ -62,6 +62,8 @@ public class ConnectionThread
 								register((String)incomingJSON.get("userName"), (String)incomingJSON.get("password"));
 							else if(((String)incomingJSON.get("action")).equals("requestUserList"))
 								sendUserList();
+							else if(((String)incomingJSON.get("action")).equals("requestPort"))
+								dishAPortOut();
 							else if(((String)incomingJSON.get("action")).equals("disconnect"))
 								disconnect(id);
 						}
@@ -108,7 +110,7 @@ public class ConnectionThread
 					json.put("userName", username);
 					json.put("userIp", ip);
 
-					Main.writeToAll(json.toJSONString());
+					Main.writeToAllButOne(json.toJSONString(), (Main.clientThreads.size()-1));
 					
 					for(int j = 0; j < Main.userList.size(); j++)
 					{
@@ -194,6 +196,14 @@ public class ConnectionThread
          writeToClient(connectionJSON.toJSONString());
 	}
 	
+	public void dishAPortOut()
+	{
+		JSONObject JSON = new JSONObject();
+		JSON.put("port", Integer.toString((Resource.LISTENING_PORT++)));
+		
+		writeToClient(JSON.toJSONString());
+	}
+	
 	public void disconnect(int id)
 	{
 		for(int i = 0; i < Main.userList.size(); i++)
@@ -203,7 +213,6 @@ public class ConnectionThread
 				Main.userList.remove(i);
 				
 				JSONObject connectionJSON = new JSONObject();
-				connectionJSON.put("source", "server");
 				connectionJSON.put("action", "removeUser");
 				connectionJSON.put("userId", Integer.toString(id));
 				Main.writeToAll(connectionJSON.toJSONString());
@@ -227,7 +236,6 @@ public class ConnectionThread
 	public String makeJSONMessage(String message, int messageType)
 	{
 		JSONObject jMessage = new JSONObject();
-		jMessage.put("source", "server");
 		jMessage.put("action", "message");
 		jMessage.put("serverMessage", message);
 		jMessage.put("type", Integer.toString(messageType));

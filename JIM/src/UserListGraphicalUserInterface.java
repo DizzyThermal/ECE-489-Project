@@ -53,6 +53,8 @@ public class UserListGraphicalUserInterface extends JFrame implements MouseListe
 	
 	public int id = -1;
 	
+	public boolean connected = false;
+	
 	UserListGraphicalUserInterface(final SSLSocket clientSocket)
 	{
 		super("JIM (" + Resource.VERSION_NUMBER + " - " + Resource.VERSION_CODENAME + ")");
@@ -69,6 +71,12 @@ public class UserListGraphicalUserInterface extends JFrame implements MouseListe
 			jsonUserList.put("action", "requestUserList");
 			
 			bWriter.write(jsonUserList.toJSONString() + "\n");
+            bWriter.flush();
+            
+            JSONObject jsonPort = new JSONObject();
+            jsonPort.put("action", "requestPort");
+            
+            bWriter.write(jsonPort.toJSONString() + "\n");
             bWriter.flush();
 		}
  		catch (Exception e) { e.printStackTrace(); }
@@ -106,15 +114,26 @@ public class UserListGraphicalUserInterface extends JFrame implements MouseListe
 					else if(incomingJSON != null)
 					{
 						if(((String)incomingJSON.get("action")).equals("addUser"))
-							addUser(Integer.parseInt((String)incomingJSON.get("userId")), (String)incomingJSON.get("userName"), (String)incomingJSON.get("userIp"));
+							addUser((int)(long)incomingJSON.get("userId"), (String)incomingJSON.get("userName"), (String)incomingJSON.get("userIp"));
 						else if(((String)incomingJSON.get("action")).equals("removeUser"))
 							removeUser(Integer.parseInt((String)incomingJSON.get("userId")));
+						else if(((String)incomingJSON.get("action")).equals("port"))
+						{
+							Resource.LISTENING_PORT = (String)incomingJSON.get("port");
+							connected = true;
+						}
 					}
 				}
 			}
 		});
 		t1.start();
 		
+		while(!connected)
+		{
+			try { Thread.sleep(1); }
+			catch (InterruptedException ie) { ie.printStackTrace(); }
+		}
+
 		t2 = (new Thread()
 		{
 			@Override
@@ -126,7 +145,7 @@ public class UserListGraphicalUserInterface extends JFrame implements MouseListe
 				}
 				catch (Exception e) { e.printStackTrace(); }
 
-				System.out.println("Listening on Port: " + Resource.PORT);
+				System.out.println("Listening on Port: " + Resource.LISTENING_PORT);
 
 				while(true) 
 				{
