@@ -71,6 +71,7 @@ public class ConnectionThread
 								bReader.close();
 								bWriter.close();
 								this.stop();
+								return;
 							}
 						}
 					}
