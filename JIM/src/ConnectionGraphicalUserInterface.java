@@ -41,10 +41,6 @@ public class ConnectionGraphicalUserInterface extends JFrame implements ActionLi
 	JTextField name = new JTextField();
 	JPasswordField password = new JPasswordField();
 	
-	SSLSocket clientSocket;
-	BufferedWriter bWriter;
-	BufferedReader bReader;
-	
 	Thread t1 = null;
 	
 	ConnectionGraphicalUserInterface()
@@ -94,7 +90,6 @@ public class ConnectionGraphicalUserInterface extends JFrame implements ActionLi
 		json.put("password", DigestUtils.md5Hex(Resource.PASSWORD));
 		
 		sendToServer(json);
-		connectServer();
 	}
 	
 	public void register()
@@ -111,17 +106,14 @@ public class ConnectionGraphicalUserInterface extends JFrame implements ActionLi
 	{
 		try
 		{
-			clientSocket = (SSLSocket)SSLSocketFactory.getDefault().createSocket(Resource.IP, Integer.parseInt(Resource.PORT));
+			final SSLSocket clientSocket = (SSLSocket)SSLSocketFactory.getDefault().createSocket(Resource.IP, Integer.parseInt(Resource.PORT));
 			clientSocket.setEnabledCipherSuites(clientSocket.getSupportedCipherSuites());
-			bWriter = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
-			bReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+			BufferedWriter bWriter = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
+			final BufferedReader bReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 
 			bWriter.write(json.toJSONString() + "\n");
 			bWriter.flush();
-		} catch (Exception e) { e.printStackTrace(); }
-	}
-	
-	public void connectServer() {
+			
 			t1 = (new Thread()
 			{
 				@Override
@@ -157,12 +149,15 @@ public class ConnectionGraphicalUserInterface extends JFrame implements ActionLi
 			                setVisible(false);
 			                break;
 						}
-						else // Registering
+						else if (incomingJSON.get("type") != null){// Registering
 							JOptionPane.showMessageDialog(null, (String)incomingJSON.get("serverMessage"), "JIM", Integer.parseInt((String)incomingJSON.get("type")));
+						}
 					}
 				}
 			});
 			t1.start();
+		}
+ 		catch (Exception e) { e.printStackTrace(); }
 	}
 	
 	@Override
