@@ -41,6 +41,8 @@ public class ConnectionGraphicalUserInterface extends JFrame implements ActionLi
 	JTextField name = new JTextField();
 	JPasswordField password = new JPasswordField();
 	
+	Thread t1 = null;
+	
 	ConnectionGraphicalUserInterface()
 	{
 		super("Connection Information");
@@ -102,54 +104,58 @@ public class ConnectionGraphicalUserInterface extends JFrame implements ActionLi
 
 	public void sendToServer(JSONObject json)
 	{
-		SSLSocket clientSocket = null;
-		BufferedWriter bWriter = null;
-		BufferedReader bReader = null;
-		
 		try
 		{
-			clientSocket = (SSLSocket)SSLSocketFactory.getDefault().createSocket(Resource.IP, Integer.parseInt(Resource.PORT));
+			final SSLSocket clientSocket = (SSLSocket)SSLSocketFactory.getDefault().createSocket(Resource.IP, Integer.parseInt(Resource.PORT));
 			clientSocket.setEnabledCipherSuites(clientSocket.getSupportedCipherSuites());
-			bWriter = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
-			bReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+			BufferedWriter bWriter = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
+			final BufferedReader bReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 
 			bWriter.write(json.toJSONString() + "\n");
 			bWriter.flush();
+			
+			t1 = (new Thread()
+			{
+				@Override
+				public void run()
+				{
+					while(!clientSocket.isClosed())
+					{
+						String incomingMessage = null;
+						try
+						{
+							incomingMessage = bReader.readLine();
+						}
+						catch(IOException ioe) { ioe.printStackTrace(); }
+						
+						if ((incomingMessage != null) && !incomingMessage.equals(""))
+						{
+							JSONObject incomingJSON = null;
+							try
+							{
+								incomingJSON = (JSONObject)(new JSONParser().parse(incomingMessage));
+							}
+							catch(ParseException pe) { pe.printStackTrace(); }
+							
+							if(incomingJSON.get("action").equals("connected"))
+							{
+								JFrame go = new UserListGraphicalUserInterface(clientSocket);
+				                go.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+				                go.setSize(300, 600);
+				                go.setResizable(true);
+				                go.setVisible(true);
+				                
+				                setVisible(false);
+							}
+							else // Registering
+								JOptionPane.showMessageDialog(null, (String)incomingJSON.get("serverMessage"), "JIM", Integer.parseInt((String)incomingJSON.get("type")));
+						}
+					}
+				}
+			});
+			t1.start();
 		}
  		catch (Exception e) { e.printStackTrace(); }
-		
-		while(!clientSocket.isClosed())
-		{
-			String incomingMessage = null;
-			try
-			{
-				incomingMessage = bReader.readLine();
-			}
-			catch(IOException ioe) { ioe.printStackTrace(); }
-			
-			if ((incomingMessage != null) && !incomingMessage.equals(""))
-			{
-				JSONObject incomingJSON = null;
-				try
-				{
-					incomingJSON = (JSONObject)(new JSONParser().parse(incomingMessage));
-				}
-				catch(ParseException pe) { pe.printStackTrace(); }
-				
-				if(incomingJSON.get("action").equals("connected"))
-				{
-					JFrame go = new UserListGraphicalUserInterface(clientSocket);
-	                go.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-	                go.setSize(300, 600);
-	                go.setResizable(true);
-	                go.setVisible(true);
-	                
-	                setVisible(false);
-				}
-				else // Registering
-					JOptionPane.showMessageDialog(null, (String)incomingJSON.get("serverMessage"), "JIM", Integer.parseInt((String)incomingJSON.get("type")));
-			}
-		}
 	}
 	
 	@Override
