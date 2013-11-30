@@ -114,7 +114,7 @@ public class ConnectionThread
 					
 					for(int j = 0; j < Main.userList.size(); j++)
 					{
-						if(Main.userList.get(i).getName().compareTo(username) > 0)
+						if(Main.userList.get(j).getName().compareTo(username) > 0)
 						{
 							Main.userList.add(new User(id, username, ip));
 							System.out.println("\"" + username + "\" has logged in!");

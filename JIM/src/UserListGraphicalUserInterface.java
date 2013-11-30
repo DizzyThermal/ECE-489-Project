@@ -28,7 +28,7 @@ import org.json.simple.parser.ParseException;
 
 public class UserListGraphicalUserInterface extends JFrame implements MouseListener, WindowListener
 {
-	public JPanel usersPanel = new JPanel(new FlowLayout());
+	public JPanel usersPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 	public JScrollPane users = new JScrollPane(usersPanel);
 	public ArrayList<JLabel> userLabels = new ArrayList<JLabel>();
 	
@@ -157,9 +157,7 @@ public class UserListGraphicalUserInterface extends JFrame implements MouseListe
 	
 	public void initGUI()
 	{
-		setLayout(new BorderLayout());
-
-		add(users, BorderLayout.CENTER);
+		add(users);
 		addWindowListener(this);
 	}
 	
@@ -185,7 +183,7 @@ public class UserListGraphicalUserInterface extends JFrame implements MouseListe
 			{
 				userList.add(i, new User(id, username, ip));
 				JLabel jL = new JLabel(username);
-				jL.setPreferredSize(new Dimension(25, 200));
+				jL.setPreferredSize(new Dimension(200, 25));
 				jL.addMouseListener(this);
 				userLabels.add(i, jL);
 				usersPanel.add(jL, i);
@@ -217,7 +215,7 @@ public class UserListGraphicalUserInterface extends JFrame implements MouseListe
 			JSONObject jsonObj = (JSONObject)json.get(i);
 			userList.add(new User((int)(long)jsonObj.get("userId"), (String)jsonObj.get("userName"), (String)jsonObj.get("userIp")));
 			JLabel jL = new JLabel((String)jsonObj.get("userName"));
-			jL.setPreferredSize(new Dimension(25, 200));
+			jL.setPreferredSize(new Dimension(200, 25));
 			jL.addMouseListener(this);
 			userLabels.add(jL);
 			usersPanel.add(jL);
