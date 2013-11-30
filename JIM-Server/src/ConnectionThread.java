@@ -199,6 +199,7 @@ public class ConnectionThread
 	public void dishAPortOut()
 	{
 		JSONObject JSON = new JSONObject();
+		JSON.put("action", "port");
 		JSON.put("port", Integer.toString((Resource.LISTENING_PORT++)));
 		
 		writeToClient(JSON.toJSONString());

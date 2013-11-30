@@ -1,7 +1,6 @@
 import java.awt.BorderLayout;
 import java.awt.Dimension;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.FlowLayout;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowEvent;
@@ -11,22 +10,17 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
-import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JTextField;
 
-import org.apache.commons.codec.digest.DigestUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -34,7 +28,7 @@ import org.json.simple.parser.ParseException;
 
 public class UserListGraphicalUserInterface extends JFrame implements MouseListener, WindowListener
 {
-	public JPanel usersPanel = new JPanel(new BorderLayout());
+	public JPanel usersPanel = new JPanel(new FlowLayout());
 	public JScrollPane users = new JScrollPane(usersPanel);
 	public ArrayList<JLabel> userLabels = new ArrayList<JLabel>();
 	
@@ -191,6 +185,7 @@ public class UserListGraphicalUserInterface extends JFrame implements MouseListe
 			{
 				userList.add(i, new User(id, username, ip));
 				JLabel jL = new JLabel(username);
+				jL.setPreferredSize(new Dimension(25, 200));
 				jL.addMouseListener(this);
 				userLabels.add(i, jL);
 				usersPanel.add(jL, i);
@@ -222,6 +217,7 @@ public class UserListGraphicalUserInterface extends JFrame implements MouseListe
 			JSONObject jsonObj = (JSONObject)json.get(i);
 			userList.add(new User((int)(long)jsonObj.get("userId"), (String)jsonObj.get("userName"), (String)jsonObj.get("userIp")));
 			JLabel jL = new JLabel((String)jsonObj.get("userName"));
+			jL.setPreferredSize(new Dimension(25, 200));
 			jL.addMouseListener(this);
 			userLabels.add(jL);
 			usersPanel.add(jL);
