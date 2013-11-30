@@ -170,12 +170,12 @@ public class ConnectionGraphicalUserInterface extends JFrame implements ActionLi
 			connect();
 		else if(e.getSource() == registerButton)
 		{
-			if(!new String(password.getPassword()).equals(""))
-				register();
-			else if(!name.getText().equals(""))
+			if(name.getText().equals(""))
 				JOptionPane.showMessageDialog(null, "Username cannot be blank!", "JIM", JOptionPane.ERROR_MESSAGE);
-			else
+			else if(new String(password.getPassword()).equals(""))
 				JOptionPane.showMessageDialog(null, "Password cannot be blank!", "JIM", JOptionPane.ERROR_MESSAGE);
+			else
+				register();
 		}
 	}
 
