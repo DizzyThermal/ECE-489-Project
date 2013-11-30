@@ -2,23 +2,15 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 
-import javax.net.ssl.SSLSocket;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
-
-public class ChatWindowGraphicalUserInterface extends JFrame implements KeyListener
+public class ChatWindowGraphicalUserInterface extends JFrame implements KeyListener, WindowListener
 {
 	public JTextArea messageArea = new JTextArea();
 	public JScrollPane messageScrollPane = new JScrollPane(messageArea);
@@ -42,6 +34,8 @@ public class ChatWindowGraphicalUserInterface extends JFrame implements KeyListe
 		setResizable(false);
 		setSize(600,400);
 		setLayout(new FlowLayout());
+		
+		this.addWindowListener(this);
 		
 		messageScrollPane.setPreferredSize(new Dimension(550, 325));
 		messageArea.setEditable(false);
@@ -71,13 +65,8 @@ public class ChatWindowGraphicalUserInterface extends JFrame implements KeyListe
 			if(!messageField.getText().equals("") && messageField.getText() != null)
 			{
 				messageArea.setText(messageArea.getText() + Resource.USERNAME + ": " + messageField.getText() + "\n");
-				
-				JSONObject json = new JSONObject();
-				json.put("action", "message");
-				json.put("userId", id);
-				json.put("userMessage", messageField.getText());
-				
-				UserListGraphicalUserInterface.sendMessageToServer(id, json.toJSONString());
+
+				UserListGraphicalUserInterface.sendMessageToServer(id, messageField.getText());
 				messageField.setText("");
 			}
 		}
@@ -89,4 +78,29 @@ public class ChatWindowGraphicalUserInterface extends JFrame implements KeyListe
 	public void keyTyped(KeyEvent e) {}
 	@Override
 	public void keyReleased(KeyEvent e) {}
+
+	@Override
+	public void windowActivated(WindowEvent e) {}
+
+	@Override
+	public void windowClosed(WindowEvent e) {}
+
+	@Override
+	public void windowClosing(WindowEvent e)
+	{
+		setVisible(false);
+		messageArea.setText("");
+	}
+
+	@Override
+	public void windowDeactivated(WindowEvent e) {}
+
+	@Override
+	public void windowDeiconified(WindowEvent e) {}
+
+	@Override
+	public void windowIconified(WindowEvent e) {}
+
+	@Override
+	public void windowOpened(WindowEvent e) {}
 }

@@ -1,7 +1,7 @@
 public class Resource
 {
-	public static final String VERSION_NUMBER		= "v0.0.2";
-	public static final String VERSION_CODENAME		= "Banana";
+	public static final String VERSION_NUMBER		= "v1.0.0";
+	public static final String VERSION_CODENAME		= "Clementine";
 	
 	public static String IP							= "localhost";
 	public static String PORT						= "4444";

@@ -107,7 +107,7 @@ public class UserListGraphicalUserInterface extends JFrame implements MouseListe
 							removeUser(Integer.parseInt((String)incomingJSON.get("userId")));
 						else if(((String)incomingJSON.get("action")).equals("message"))
 						{
-							int clientId = checkConnection((int)(long)incomingJSON.get("userId"));
+							int clientId = checkConnection((int)(long)incomingJSON.get("senderId"));
 							if(clientId >= 0)
 								connectedUsers.get(clientId).append((String)incomingJSON.get("userMessage"));
 							else
@@ -133,7 +133,12 @@ public class UserListGraphicalUserInterface extends JFrame implements MouseListe
 		for(int i = 0; i < connectedUsers.size(); i++)
 		{
 			if(connectedUsers.get(i).getId() == id)
+			{
+				if(!connectedUsers.get(i).isVisible())
+					connectedUsers.get(i).setVisible(true);
+
 				return i;
+			}
 		}
 		
 		return -1;
@@ -278,7 +283,8 @@ public class UserListGraphicalUserInterface extends JFrame implements MouseListe
 	public void windowClosed(WindowEvent e) {}
 
 	@Override
-	public void windowClosing(WindowEvent e) {
+	public void windowClosing(WindowEvent e)
+	{
 		disconnect();
 	}
 
