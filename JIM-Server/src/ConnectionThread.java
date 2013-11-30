@@ -122,6 +122,11 @@ public class ConnectionThread
 					
 					Main.userList.add(new User(id, username, ip));
 					System.out.println("\"" + username + "\" has logged in!");
+					
+					JSONObject jsonConnected = new JSONObject();
+					jsonConnected.put("action", "connected");
+					
+					writeToClient(jsonConnected.toJSONString());
 				}
 				else
 					writeToClient(makeJSONMessage("The password entered is incorrect!", JOptionPane.ERROR_MESSAGE));

@@ -136,20 +136,15 @@ public class ConnectionGraphicalUserInterface extends JFrame implements ActionLi
 				}
 				catch(ParseException pe) { pe.printStackTrace(); }
 				
-				if(incomingJSON.get("action").equals("connect"))
+				if(incomingJSON.get("action").equals("connected"))
 				{
-					if(incomingJSON.get("result").equals("success"))
-					{
-						JFrame go = new UserListGraphicalUserInterface(clientSocket);
-		                go.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		                go.setSize(300, 600);
-		                go.setResizable(true);
-		                go.setVisible(true);
-		                
-		                setVisible(false);
-					}
-					else
-						JOptionPane.showMessageDialog(null, (String)incomingJSON.get("serverMessage"), "JIM", Integer.parseInt((String)incomingJSON.get("type")));
+					JFrame go = new UserListGraphicalUserInterface(clientSocket);
+	                go.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+	                go.setSize(300, 600);
+	                go.setResizable(true);
+	                go.setVisible(true);
+	                
+	                setVisible(false);
 				}
 				else // Registering
 					JOptionPane.showMessageDialog(null, (String)incomingJSON.get("serverMessage"), "JIM", Integer.parseInt((String)incomingJSON.get("type")));
