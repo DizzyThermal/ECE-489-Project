@@ -104,7 +104,7 @@ public class UserListGraphicalUserInterface extends JFrame implements MouseListe
 						if(((String)incomingJSON.get("action")).equals("addUser"))
 							addUser((int)(long)incomingJSON.get("userId"), (String)incomingJSON.get("userName"));
 						else if(((String)incomingJSON.get("action")).equals("removeUser"))
-							removeUser(Integer.parseInt((String)incomingJSON.get("userId")));
+							removeUser((int)(long)incomingJSON.get("userId"));
 						else if(((String)incomingJSON.get("action")).equals("message"))
 						{
 							int clientId = checkConnection((int)(long)incomingJSON.get("senderId"));
@@ -194,6 +194,9 @@ public class UserListGraphicalUserInterface extends JFrame implements MouseListe
 				userLabels.remove(i);
 			}
 		}
+		
+		validate();
+		repaint();
 	}
 	
 	public void updateUsers(JSONArray json)
@@ -214,6 +217,9 @@ public class UserListGraphicalUserInterface extends JFrame implements MouseListe
 			userLabels.add(jL);
 			usersPanel.add(jL);
 		}
+		
+		validate();
+		repaint();
 	}
 	
 	public void disconnect()
@@ -251,6 +257,17 @@ public class UserListGraphicalUserInterface extends JFrame implements MouseListe
 		catch (IOException ioe) { ioe.printStackTrace(); }
 	}
 	
+	public int getIdByUsername(String username)
+	{
+		for(int i = 0; i < userList.size(); i++)
+		{
+			if(userList.get(i).getName().equals(username))
+				return userList.get(i).getId();
+		}
+		
+		return -1;
+	}
+	
 	@Override
 	public void mouseClicked(MouseEvent e)
 	{
@@ -258,8 +275,10 @@ public class UserListGraphicalUserInterface extends JFrame implements MouseListe
 		{
 			if(userLabels.get(i) == e.getSource())
 			{
-				if(checkConnection(userList.get(i).getId()) < 0)
-					connectedUsers.add(new ChatWindowGraphicalUserInterface(userList.get(i).getId(), userList.get(i).getName(), null));
+				int id = getIdByUsername(((JLabel)e.getSource()).getText());
+
+				if(checkConnection(id) < 0)
+					connectedUsers.add(new ChatWindowGraphicalUserInterface(id, ((JLabel)e.getSource()).getText(), null));
 			}
 		}
 	}

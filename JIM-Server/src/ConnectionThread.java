@@ -122,13 +122,19 @@ public class ConnectionThread
 					json.put("action", "addUser");
 					json.put("userId", id);
 					json.put("userName", username);
-					
+
 					for(int j = 0; j < Main.userList.size(); j++)
 					{
 						if(Main.userList.get(j).getName().compareTo(username) > 0)
 						{
-							Main.userList.add(new User(id, username, ip));
+							Main.userList.add(j, new User(id, username, ip));
 							System.out.println("\"" + username + "\" has logged in!");
+							
+							JSONObject jsonConnected = new JSONObject();
+							jsonConnected.put("action", "connected");
+							
+							writeToClient(jsonConnected.toJSONString());
+							Main.writeToAll(json.toJSONString());
 							return;
 						}
 					}
@@ -224,6 +230,10 @@ public class ConnectionThread
 				Main.clientThreads.remove(i);
 			}
 		}
+		
+		JSONObject disconnectJSON = new JSONObject();
+		disconnectJSON.put("action", "removeUser");
+		disconnectJSON.put("userId", id);
 	}
 	
 	public void writeToClient(String message)
@@ -244,7 +254,6 @@ public class ConnectionThread
 			{
 				JSONObject json = new JSONObject();
 				json.put("action", "message");
-				json.put("userId", id);
 				json.put("userMessage", message);
 				json.put("userName", getUserNameById(this.id));
 				json.put("senderId", this.id);
