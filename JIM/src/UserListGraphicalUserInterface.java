@@ -253,7 +253,8 @@ public class UserListGraphicalUserInterface extends JFrame implements MouseListe
 		{
 			if(userLabels.get(i) == e.getSource())
 			{
-				connectedUsers.add(new ChatWindowGraphicalUserInterface(userList.get(i).getId(), userList.get(i).getName(), null));
+				if(checkConnection(userList.get(i).getId()) < 0)
+					connectedUsers.add(new ChatWindowGraphicalUserInterface(userList.get(i).getId(), userList.get(i).getName(), null));
 			}
 		}
 	}

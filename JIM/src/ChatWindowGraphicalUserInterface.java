@@ -33,6 +33,7 @@ public class ChatWindowGraphicalUserInterface extends JFrame implements KeyListe
 		this.id = id;
 		this.username = username;
 		
+		setTitle(username);
 		initGUI(initialMessage);
 	}
 	
@@ -52,11 +53,14 @@ public class ChatWindowGraphicalUserInterface extends JFrame implements KeyListe
 		
 		if(initialMessage != null)
 			append(initialMessage);
+		
+		setVisible(true);
+		messageField.addKeyListener(this);
 	}
 	
 	public void append(String message)
 	{
-		messageArea.setText(messageArea.getText() + "\n" + username + ": " + message);
+		messageArea.setText(messageArea.getText() + username + ": " + message + "\n");
 	}
 	
 	@Override
@@ -66,7 +70,7 @@ public class ChatWindowGraphicalUserInterface extends JFrame implements KeyListe
 		{
 			if(!messageField.getText().equals("") && messageField.getText() != null)
 			{
-				messageArea.setText(messageArea.getText() + "\n" + Resource.USERNAME + ": " + messageField.getText());
+				messageArea.setText(messageArea.getText() + Resource.USERNAME + ": " + messageField.getText() + "\n");
 				
 				JSONObject json = new JSONObject();
 				json.put("action", "message");
@@ -74,6 +78,7 @@ public class ChatWindowGraphicalUserInterface extends JFrame implements KeyListe
 				json.put("userMessage", messageField.getText());
 				
 				UserListGraphicalUserInterface.sendMessageToServer(id, json.toJSONString());
+				messageField.setText("");
 			}
 		}
 	}

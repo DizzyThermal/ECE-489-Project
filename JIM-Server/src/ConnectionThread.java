@@ -65,7 +65,7 @@ public class ConnectionThread
 								register((String)incomingJSON.get("userName"), (String)incomingJSON.get("password"));
 							else if(((String)incomingJSON.get("action")).equals("requestUserList"))
 								sendUserList();
-							else if(((String)incomingJSON.get("action")).equals("requestUserList"))
+							else if(((String)incomingJSON.get("action")).equals("message"))
 								relayMessage((int)(long)incomingJSON.get("userId"), (String)incomingJSON.get("userMessage"));
 							else if(((String)incomingJSON.get("action")).equals("disconnect"))
 								disconnect(id);
