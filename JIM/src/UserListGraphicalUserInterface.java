@@ -102,7 +102,7 @@ public class UserListGraphicalUserInterface extends JFrame implements MouseListe
 					else if(incomingJSON != null)
 					{
 						if(((String)incomingJSON.get("action")).equals("addUser"))
-							addUser((int)(long)incomingJSON.get("userId"), (String)incomingJSON.get("userName"), (String)incomingJSON.get("userIp"), (int)(long)incomingJSON.get("userPort"));
+							addUser((int)(long)incomingJSON.get("userId"), (String)incomingJSON.get("userName"));
 						else if(((String)incomingJSON.get("action")).equals("removeUser"))
 							removeUser(Integer.parseInt((String)incomingJSON.get("userId")));
 						else if(((String)incomingJSON.get("action")).equals("message"))
@@ -139,7 +139,7 @@ public class UserListGraphicalUserInterface extends JFrame implements MouseListe
 		return -1;
 	}
 	
-	public void addUser(int id, String username, String ip, int port)
+	public void addUser(int id, String username)
 	{
 		if(username.equals(Resource.USERNAME))
 			return;
