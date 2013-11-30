@@ -11,8 +11,11 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 
+import javax.net.ssl.SSLServerSocket;
+import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import javax.swing.JButton;
@@ -29,56 +32,44 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
-public class UserListGraphicalUserInterface extends JFrame implements ActionListener, MouseListener, WindowListener
+public class UserListGraphicalUserInterface extends JFrame implements MouseListener, WindowListener
 {
 	public JPanel usersPanel = new JPanel(new BorderLayout());
 	public JScrollPane users = new JScrollPane(usersPanel);
 	public ArrayList<JLabel> userLabels = new ArrayList<JLabel>();
 	
 	public ArrayList<ChatWindowGraphicalUserInterface> connectedUsers = new ArrayList<ChatWindowGraphicalUserInterface>();
-	public ArrayList<User> userList = new ArrayList<User>();
+	public static ArrayList<User> userList = new ArrayList<User>();
 	
 	public SSLSocket clientSocket;
+	public static SSLServerSocket listeningSocket;
+
 	public BufferedWriter bWriter;
 	public BufferedReader bReader;
 	public ArrayList<Integer> portList = new ArrayList<Integer>();
 	
 	public Thread t1;
+	public Thread t2;
 	
 	public int id = -1;
 	
-	UserListGraphicalUserInterface(boolean registering)
+	UserListGraphicalUserInterface(final SSLSocket clientSocket)
 	{
-		super("ECE 489 - JIM (" + Resource.VERSION_NUMBER + " - " + Resource.VERSION_CODENAME + ")");
-		setLayout(new BorderLayout());
+		super("JIM (" + Resource.VERSION_NUMBER + " - " + Resource.VERSION_CODENAME + ")");
+		this.clientSocket = clientSocket;
 		
-		//((JTextArea)((JViewport)users.getComponent(0)).getView()).setEditable(false);
-		add(users, BorderLayout.CENTER);
+		initGUI();
 		
-		JSONObject connectionJSON = new JSONObject();
-		connectionJSON.put("source", "client");
-		if(registering)
-			connectionJSON.put("action", "register");
-		else
-			connectionJSON.put("action", "connect");
-		connectionJSON.put("userName", Resource.USERNAME);
-		connectionJSON.put("password", DigestUtils.md5Hex(Resource.PASSWORD));
-
-		this.addWindowListener(this);
-		
-		System.out.println("Before Try");
 		try
 		{
-			clientSocket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(Resource.IP, Integer.parseInt(Resource.PORT));
-			clientSocket.setEnabledCipherSuites(clientSocket.getSupportedCipherSuites());
 			bWriter = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
 			bReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-			System.out.println(clientSocket.isConnected());
-			System.out.println("Before print: "+connectionJSON.toJSONString());
-			System.out.println(clientSocket.getOutputStream());
-			bWriter.write(connectionJSON.toJSONString() + "\n");
-			bWriter.flush();
-			System.out.println("Just wrote to buffer");
+			
+			JSONObject jsonUserList = new JSONObject();
+			jsonUserList.put("action", "requestUserList");
+			
+			bWriter.write(jsonUserList.toJSONString() + "\n");
+            bWriter.flush();
 		}
  		catch (Exception e) { e.printStackTrace(); }
 
@@ -95,151 +86,118 @@ public class UserListGraphicalUserInterface extends JFrame implements ActionList
 						incomingMessage = bReader.readLine();
 					}
 					catch(IOException ioe) { ioe.printStackTrace(); }
+					if((incomingMessage != null) && !incomingMessage.equals("") && !incomingMessage.equals("[]"))
+						continue;
 					
-					if ((incomingMessage != null) && !incomingMessage.equals("") && !incomingMessage.equals("[]"))
+					// We Got Something!
+					JSONObject incomingJSON = null;
+					JSONArray incomingJSONArray = null;
+					try
 					{
-						JSONObject incomingJSON = null;
-						JSONArray incomingJSONArray = null;
-						System.out.println(incomingMessage);
-						try
-						{
-							if((incomingMessage.charAt(0) == '[') && (incomingMessage.charAt(incomingMessage.length()-1) == ']'))
-								incomingJSONArray = (JSONArray)(new JSONParser().parse(incomingMessage));
-							else
-								incomingJSON = (JSONObject)(new JSONParser().parse(incomingMessage));
-						}
-						catch(ParseException pe) { pe.printStackTrace(); }
-						
-						if(incomingJSONArray != null)
-							updateUsers(incomingJSONArray);
-						else if(incomingJSON != null)
-						{
-							if(incomingJSON.get("source").equals("server"))
-							{
-								String action = (String)incomingJSON.get("action");
-								if(action.equals("addUser"))
-									addUser(Integer.parseInt((String)incomingJSON.get("userId")), (String)incomingJSON.get("userName"), (String)incomingJSON.get("userIp"));
-								else if(action.equals("removeUser"))
-									removeUser(Integer.parseInt((String)incomingJSON.get("userId")));
-								else if(action.equals("message"))
-									JOptionPane.showMessageDialog(null, (String)incomingJSON.get("serverMessageTitle"), (String)incomingJSON.get("serverMessage"), JOptionPane.DEFAULT_OPTION);
-								else if(action.equals("register")){
-									if(!incomingJSON.get("result").equals("success"))
-										System.exit(1);
-								}
-								else if(action.equals("p2p_request")){
-									createClientChatWindow(
-											Integer.parseInt((String)incomingJSON.get("initiatorId")),
-											(String)incomingJSON.get("initiatorIP"),
-											Integer.parseInt((String)incomingJSON.get("initiatorPort"))
-											);
-								}
-							}
-							/*
-							else if(incomingJSON.get("source").equals("client_port")){
-								// Current connections have already been checked. 
-								// Need to create a new connection/window
-								ChatWindowGraphicalUserInterface cwGUI = new ChatWindowGraphicalUserInterface(
-										Integer.parseInt((String)incomingJSON.get("userId")), 
-										getUserNameById(Integer.parseInt((String)incomingJSON.get("userId"))), 
-										getIpById(Integer.parseInt((String)incomingJSON.get("userId"))), 
-										Integer.parseInt((String)incomingJSON.get("port"))
-										);
-								cwGUI.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-								cwGUI.setSize(300, 600);
-								cwGUI.setResizable(true);
-								cwGUI.setVisible(true);	
-								connectedUsers.add(cwGUI);
-							}
-							*/
-							/*
-							else if(incomingJSON.get("source").equals("client"))
-							{
-								int clientIndex = checkConnection(Integer.parseInt((String)incomingJSON.get("userId"))); 
-								if(clientIndex < 0)
-								{
-									ChatWindowGraphicalUserInterface cwGUI = new ChatWindowGraphicalUserInterface(Integer.parseInt((String)incomingJSON.get("userId")), getUserNameById(Integer.parseInt((String)incomingJSON.get("userId"))), getIpById(Integer.parseInt((String)incomingJSON.get("userId"))), (String)incomingJSON.get("userMessage"));
-									cwGUI.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-									cwGUI.setSize(300, 600);
-									cwGUI.setResizable(true);
-									cwGUI.setVisible(true);
-								}
-								else
-								{
-									connectedUsers.get(clientIndex).append((String)incomingJSON.get("message"));
-								}
-							}
-							*/	
-						}
+						if((incomingMessage.charAt(0) == '[') && (incomingMessage.charAt(incomingMessage.length()-1) == ']'))
+							incomingJSONArray = (JSONArray)(new JSONParser().parse(incomingMessage));
+						else
+							incomingJSON = (JSONObject)(new JSONParser().parse(incomingMessage));
+					}
+					catch(ParseException pe) { pe.printStackTrace(); }
+					
+					if(incomingJSONArray != null)
+						updateUsers(incomingJSONArray);
+					else if(incomingJSON != null)
+					{
+						if(((String)incomingJSON.get("action")).equals("addUser"))
+							addUser(Integer.parseInt((String)incomingJSON.get("userId")), (String)incomingJSON.get("userName"), (String)incomingJSON.get("userIp"));
+						else if(((String)incomingJSON.get("action")).equals("removeUser"))
+							removeUser(Integer.parseInt((String)incomingJSON.get("userId")));
 					}
 				}
 			}
 		});
 		t1.start();
+		
+		t2 = (new Thread()
+		{
+			@Override
+			public void run()
+			{
+				try
+				{
+					listeningSocket = (SSLServerSocket) SSLServerSocketFactory.getDefault().createServerSocket(Integer.parseInt(Resource.PORT));
+				}
+				catch (Exception e) { e.printStackTrace(); }
+
+				System.out.println("Listening on Port: " + Resource.PORT);
+
+				while(true) 
+				{
+					try
+					{
+						if(listeningSocket.getInetAddress().toString() != "0.0.0.0/0.0.0.0" && !isConnected(listeningSocket.getInetAddress().toString()))
+							connectedUsers.add(new ChatWindowGraphicalUserInterface((SSLSocket)listeningSocket.accept(), getUserNameByIp(listeningSocket.getInetAddress().toString().split("/")[0])));
+					}
+					catch (Exception e) { e.printStackTrace(); }
+				}
+			}
+		});
+		t2.start();
+	}
+	
+	public void initGUI()
+	{
+		setLayout(new BorderLayout());
+
+		add(users, BorderLayout.CENTER);
+		addWindowListener(this);
+	}
+	
+	public static boolean isConnected(String ip)
+	{
+		for(int i = 0; i < userList.size(); i++)
+		{
+			if(userList.get(i).getIp().equals(ip))
+				return true;
+		}
+		
+		return false;
 	}
 	
 	public void addUser(int id, String username, String ip)
 	{
-		int index = -1;
-		System.out.println("Adding user");
 		if(username.equals(Resource.USERNAME))
 			return;
+		
 		for(int i = 0; i < userList.size(); i++)
 		{
-			if(id == userList.get(i).getId())
+			if(username.compareTo(userList.get(i).getName()) > 0)
 			{
-				index = i;
+				userList.add(i, new User(id, username, ip));
+				JLabel jL = new JLabel(username);
+				jL.addMouseListener(this);
+				userLabels.add(i, jL);
+				usersPanel.add(jL, i);
+				
 				break;
 			}
-		}
-		System.out.println("Index: "+index);
-		
-		if(index == -1) // user not found, adding...
-		{
-		/*
-			JSONObject jsonObj = (JSONObject)json.get(i);
-			userList.add(new User((int)(long)jsonObj.get("userId"), (String)jsonObj.get("userName"), (String)jsonObj.get("userIp")));
-			JLabel jL = new JLabel((String)jsonObj.get("userName"));
-			jL.addMouseListener(this);
-			userLabels.add(jL);
-			usersPanel.add(jL);
-			
-			System.out.println("Adding user "+username);
-			index = userList.size();
-			userList.add(index, new User(id, username, ip));
-			JLabel jL = new JLabel(username);
-			jL.addMouseListener(this);
-			userLabels.add(index, jL);
-			usersPanel.add(jL, index);
-			*/
-		}
-		
+		}	
 	}
 	
 	public void removeUser(int id)
 	{
-		int index = -1;
 		for(int i = 0; i < userList.size(); i++)
 		{
 			if(userList.get(i).getId() == id)
 			{
-				index = i;
-				break;
+				userList.remove(i);
+				usersPanel.remove(i);
+				userLabels.remove(i);
 			}
-		}
-		
-		if(index > 0)
-		{
-			userList.remove(index);
-			usersPanel.remove(index);
-			userLabels.remove(index);
 		}
 	}
 	
 	public void updateUsers(JSONArray json)
 	{
 		usersPanel.removeAll();
-		System.out.println("Updating User List");
+
 		for(int i = 0; i < json.size(); i++)
 		{
 			JSONObject jsonObj = (JSONObject)json.get(i);
@@ -251,175 +209,51 @@ public class UserListGraphicalUserInterface extends JFrame implements ActionList
 		}
 	}
 	
-	public int checkConnection(int id)
-	{
-		for(int i = 0; i < connectedUsers.size(); i++)
-		{
-			if(connectedUsers.get(i).getId() == id)
-				return i;
-		}
-		
-		return -1;
-	}
-	
 	public void disconnect()
 	{
-		System.out.println("Sending Disconnect to Server.");
-		JSONObject json = null;
-		if (bWriter != null){
-			json = new JSONObject();
-			json.put("source", "client");
+		try {
+			JSONObject json = new JSONObject();
 			json.put("action", "disconnect");
-			try {
-				bWriter.write(json.toJSONString()+"\n");
-				bWriter.flush();
-			} catch (IOException e1) { e1.printStackTrace(); }
-		}
-		t1.stop();
-		try
-		{
+			bWriter.write(json.toJSONString() + "\n");
+			bWriter.flush();
+			
 			bReader.close();
 			bWriter.close();
 			clientSocket.close();
-			
-		}
-		catch(Exception e) { e.printStackTrace(); }
-		
+		} catch (IOException e1) { e1.printStackTrace(); }
+
 		setVisible(false);
 		dispose();
+		
+		t1.stop();
 		System.exit(0);
 	}
 
-	public String getUserNameById(int id)
+	public String getUserNameByIp(String ip)
 	{
 		for(int i = 0; i < userList.size(); i++)
 		{
-			if(userList.get(i).getId() == id)
-			{
+			if(userList.get(i).getIp().equals(ip))
 				return userList.get(i).getName();
-			}
 		}
 		
 		return null;
-	}
-
-	public int getIdByUserName(String uname)
-	{
-		for(int i = 0; i < userList.size(); i++)
-		{
-			if(userList.get(i).getName().equals(uname))
-			{
-				return userList.get(i).getId();
-			}
-		}
-		
-		return -1;
-	}	
-	public String getIpById(int id)
-	{
-		for(int i = 0; i < userList.size(); i++)
-		{
-			if(userList.get(i).getId() == id)
-			{
-				return userList.get(i).getIp();
-			}
-		}
-		
-		return null;
-	}
-
-	// get random port from 50000-65536
-	public int getRandomPort(){
-		int randomPort = (int)(Math.random()*15536)+50000;
-		while(portList.contains(randomPort)){
-			randomPort = (int)(Math.random()*15536)+50000;
-		}
-		portList.add(randomPort);
-		return randomPort;
-	}
-	
-	@Override
-	public void actionPerformed(ActionEvent e) 
-	{
-		// Check if we are already connected
-		ChatWindowGraphicalUserInterface tmp = (ChatWindowGraphicalUserInterface)e.getSource();
-		if(checkConnection(tmp.id) != -1){
-			System.out.println("Already connected to user "+tmp.id);
-		}
-		else{
-			connectToUser(tmp.id);
-		}
-	}
-	
-	public void connectToUser(int id){
-		// Process
-		// 1. Client gets random port #
-		// 2. Client creates server socket on port
-		// 3. client sends link request to server with port# and remote client id
-		// 4. Server sends client connection_request with port# and requester client id
-		// 5. Client creates client socket
-		// 6. P2P connection established
-
-		System.out.println("ConnectToUser Entry Point");
-		// 1. Client gets random port #
-		int port = getRandomPort();
-		System.out.println("P2P Port"+' '+port+" selected");
-		
-		// 2. Client creates server socket on port
-		ChatWindowGraphicalUserInterface cwGUI = new ChatWindowGraphicalUserInterface(
-				id, 
-				getUserNameById(id), 
-				getIpById(id), 
-				port,
-				Resource.SERVER
-				);
-		cwGUI.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		cwGUI.setSize(300, 600);
-		cwGUI.setResizable(true);
-		cwGUI.setVisible(true);	
-		connectedUsers.add(cwGUI);
-		System.out.println("Created chat window GUI");
-		// 3. client sends link request to server with port# and remote client id
-		
-		JSONObject json = new JSONObject();
-		json.put("source", "client");
-		json.put("action", "link");
-		json.put("remoteUserId", Integer.toString(id));
-		json.put("port", Integer.toString(port));
-		System.out.println(json.toJSONString());
-		try {
-			bWriter.write(json.toJSONString()+"\n");
-			bWriter.flush();
-		} catch (IOException e) { e.printStackTrace(); }
-		System.out.println("Sent link request to server");
-	}
-	
-	public void createClientChatWindow(int id, String ip, int port){
-		
-		ChatWindowGraphicalUserInterface cwGUI = new ChatWindowGraphicalUserInterface(
-				id, 
-				getUserNameById(id), 
-				ip.substring(1), // remove slash 
-				port,
-				Resource.CLIENT
-				);
-		cwGUI.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		cwGUI.setSize(300, 600);
-		cwGUI.setResizable(true);
-		cwGUI.setVisible(true);	
-		connectedUsers.add(cwGUI);
-		System.out.println("Created chat window GUI");
-		
 	}
 	
 	@Override
 	public void mouseClicked(MouseEvent e)
 	{
-		// TODO - Open Chat
-		String uname = ((JLabel)e.getSource()).getText();
-		int id = getIdByUserName(uname);
-		System.out.println("About to try to connect to "+uname+" id: "+id);
-		connectToUser(id);
+		for(int i = 0; i < usersPanel.getComponentCount(); i++)
+		{
+			if(userLabels.get(i) == e.getSource())
+			{
+				try
+				{
+					connectedUsers.add(new ChatWindowGraphicalUserInterface((SSLSocket)SSLSocketFactory.getDefault().createSocket(userList.get(i).getIp(), Integer.parseInt(Resource.LISTENING_PORT)), getUserNameByIp(userList.get(i).getIp())));
+				}
+				catch (NumberFormatException | IOException e1) { e1.printStackTrace(); }
+			}
+		}
 	}
 
 	@Override

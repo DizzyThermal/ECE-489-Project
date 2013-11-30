@@ -20,86 +20,68 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.JViewport;
 
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+
 public class ChatWindowGraphicalUserInterface extends JFrame implements KeyListener
 {
 	public JTextArea messageArea = new JTextArea();
 	public JScrollPane messageScrollPane = new JScrollPane(messageArea);
 	public JTextField messageField = new JTextField();
 	
-	public int id;
-	public String username;
-	public String ip;
-	public int port;
-	
-	// Socket Attributes attributes
-	public static SSLServerSocket serverSocket;
-	public static SSLSocket connectedServerSocket;
-	public static SSLSocket clientSocket;
+	public SSLSocket chatSocket;
 	public BufferedWriter bWriter;
 	public BufferedReader bReader;
+	
 	public Thread thread;
-	
-	
-	ChatWindowGraphicalUserInterface(int _id, String _username, String _ip, int _port, final String side)
+	public String username;
+
+	ChatWindowGraphicalUserInterface(final SSLSocket chatSocket, final String username)
 	{
-		setLayout(new BorderLayout());
-		System.out.println("ChatWindowGraphicalUserInterface Entry Point");
-		id = _id;
-		username = _username;
-		ip = _ip;
-		port = _port;
-
-		System.out.println("Calling create panel");
-		createPanel();
-		messageArea.setEditable(false);
-
-		System.out.println("Creating socket");
-		// Create Socket Connection
-		thread = new Thread(){
+		this.chatSocket = chatSocket;
+		this.chatSocket.setEnabledCipherSuites(chatSocket.getSupportedCipherSuites());
+		this.username = username;
+		
+		initGUI();
+		
+		
+		thread = (new Thread()
+		{
 			@Override
-			public void run(){
-				if(side.equals(Resource.SERVER)){
-					// Create the server side of the connection
+			public void run()
+			{
+				while(!chatSocket.isClosed())
+				{
+					String incomingMessage = null;
 					try
 					{
-						System.out.println("Creating Server Side "+ip+" "+port);
-						System.out.println("SSL Server Setup");
-						serverSocket = (SSLServerSocket) SSLServerSocketFactory.getDefault().createServerSocket(port);
-						System.out.println("SSL Server wait for accept");
-						connectedServerSocket = (SSLSocket)serverSocket.accept();
-						System.out.println("Cipher Suites");
-						serverSocket.setEnabledCipherSuites(connectedServerSocket.getSupportedCipherSuites());
-						System.out.println("SSL Server Streams");
-						bWriter = new BufferedWriter(new OutputStreamWriter(connectedServerSocket.getOutputStream()));
-						bReader = new BufferedReader(new InputStreamReader(connectedServerSocket.getInputStream()));
+						incomingMessage = bReader.readLine();
 					}
-					catch (Exception e) { e.printStackTrace(); }
-		
-					System.out.println("Listening on Port: " + port);
-				}
-				else{
-					// Create client side of connection
-					try {
-						sleep(1000);
-						System.out.println("Creating Client Side "+ip+" "+port);
-						clientSocket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(ip, port);
-						System.out.println("Setting Cipher Suites");
-						clientSocket.setEnabledCipherSuites(clientSocket.getSupportedCipherSuites());
-						System.out.println("SSL client streams");
-						bWriter = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
-						bReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-					} catch (Exception e) { e.printStackTrace(); }
+					catch(IOException ioe) { ioe.printStackTrace(); }
+					if((incomingMessage != null) && !incomingMessage.equals("") && !incomingMessage.equals("[]"))
+						continue;
 					
+					// We Got Something!
+					JSONObject incomingJSON = null;
+					try
+					{
+						incomingJSON = (JSONObject)(new JSONParser().parse(incomingMessage));
+					}
+					catch (ParseException e) { e.printStackTrace(); }
+					append("\n" + username + ": " + incomingJSON.get("message"));
 				}
 			}
-		};
+		});
 		thread.start();
 	}
 	
-	
-	public void createPanel()
+	public void initGUI()
 	{
-		// Create GUI - I'll do this (Steve)
+		setLayout(new BorderLayout());
+		// GUI
+		messageArea.setEditable(false);
 	}
 	
 	public void append(String message)
@@ -116,7 +98,15 @@ public class ChatWindowGraphicalUserInterface extends JFrame implements KeyListe
 			{
 				messageArea.setText(messageArea.getText() + "\n" + Resource.USERNAME + ": " + messageField.getText());
 				
-				// Send to Client
+				JSONObject json = new JSONObject();
+				json.put("message", messageField.getText());
+				
+				try
+				{
+					bWriter.write(json.toJSONString() + "\n");
+					bWriter.flush();
+				}
+				catch (IOException e1) { e1.printStackTrace(); }
 			}
 		}
 	}
@@ -125,7 +115,4 @@ public class ChatWindowGraphicalUserInterface extends JFrame implements KeyListe
 	public void keyTyped(KeyEvent e) {}
 	@Override
 	public void keyReleased(KeyEvent e) {}
-	
-	public int getId() { return id; }
-	
 }

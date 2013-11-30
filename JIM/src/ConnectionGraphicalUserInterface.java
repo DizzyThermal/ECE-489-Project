@@ -5,13 +5,27 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
+
+import org.apache.commons.codec.digest.DigestUtils;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 public class ConnectionGraphicalUserInterface extends JFrame implements ActionListener, KeyListener
 {
@@ -21,7 +35,7 @@ public class ConnectionGraphicalUserInterface extends JFrame implements ActionLi
 	JLabel nameLabel = new JLabel("Username: ");
 	JLabel passwordLabel = new JLabel("Password: ");
 	
-	JButton loginButton = new JButton("Login");
+	JButton loginButton = new JButton("Connect");
 	JButton registerButton = new JButton("Register");
 	
 	JTextField name = new JTextField();
@@ -30,16 +44,15 @@ public class ConnectionGraphicalUserInterface extends JFrame implements ActionLi
 	ConnectionGraphicalUserInterface()
 	{
 		super("Connection Information");
+		initGUI();
+	}
+	
+	public void initGUI()
+	{
 		FlowLayout fl = new FlowLayout();
 		fl.setAlignment(FlowLayout.LEFT);
 		setLayout(fl);
-		
-		createPanel();
-		add(mainPanel);
-	}
-	
-	public void createPanel()
-	{
+
 		mainPanel.setPreferredSize(new Dimension(300, 410));
 		titleLabel.setPreferredSize(new Dimension(300, 20));
 		titleLabel.setFont(new Font("Arial", Font.BOLD, 20));
@@ -63,42 +76,107 @@ public class ConnectionGraphicalUserInterface extends JFrame implements ActionLi
 		mainPanel.addKeyListener(this);
 		loginButton.addActionListener(this);
 		registerButton.addActionListener(this);
+		
+		add(mainPanel);
 	}
 	
-	public void login()
+	public void connect()
 	{
-		Resource.USERNAME = name.getText();
-		Resource.PASSWORD = new String(password.getPassword());
-		this.setVisible(false);
-		Main.connectionGUIStatus = true;
+		JSONObject json = new JSONObject();
+		json.put("action", "connect");
+		json.put("userName", Resource.USERNAME);
+		json.put("password", DigestUtils.md5Hex(Resource.PASSWORD));
+		
+		sendToServer(json);
+	}
+	
+	public void register()
+	{
+		JSONObject json = new JSONObject();
+		json.put("action", "register");
+		json.put("userName", Resource.USERNAME);
+		json.put("password", DigestUtils.md5Hex(Resource.PASSWORD));
+		
+		sendToServer(json);
 	}
 
+	public void sendToServer(JSONObject json)
+	{
+		SSLSocket clientSocket = null;
+		BufferedWriter bWriter = null;
+		BufferedReader bReader = null;
+		
+		try
+		{
+			clientSocket = (SSLSocket)SSLSocketFactory.getDefault().createSocket(Resource.IP, Integer.parseInt(Resource.PORT));
+			clientSocket.setEnabledCipherSuites(clientSocket.getSupportedCipherSuites());
+			bWriter = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
+			bReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+
+			bWriter.write(json.toJSONString() + "\n");
+			bWriter.flush();
+		}
+ 		catch (Exception e) { e.printStackTrace(); }
+		
+		while(!clientSocket.isClosed())
+		{
+			String incomingMessage = null;
+			try
+			{
+				incomingMessage = bReader.readLine();
+			}
+			catch(IOException ioe) { ioe.printStackTrace(); }
+			
+			if ((incomingMessage != null) && !incomingMessage.equals(""))
+			{
+				JSONObject incomingJSON = null;
+				try
+				{
+					incomingJSON = (JSONObject)(new JSONParser().parse(incomingMessage));
+				}
+				catch(ParseException pe) { pe.printStackTrace(); }
+				
+				if(incomingJSON.get("action").equals("connect"))
+				{
+					if(incomingJSON.get("result").equals("success"))
+					{
+						JFrame go = new UserListGraphicalUserInterface(clientSocket);
+		                go.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		                go.setSize(300, 600);
+		                go.setResizable(true);
+		                go.setVisible(true);
+		                
+		                setVisible(false);
+					}
+					else
+						JOptionPane.showMessageDialog(null, (String)incomingJSON.get("serverMessage"), "JIM", Integer.parseInt((String)incomingJSON.get("type")));
+				}
+				else // Registering
+					JOptionPane.showMessageDialog(null, (String)incomingJSON.get("serverMessage"), "JIM", Integer.parseInt((String)incomingJSON.get("type")));
+			}
+		}
+	}
+	
 	@Override
 	public void actionPerformed(ActionEvent e)
 	{
+		Resource.USERNAME = name.getText();
+		Resource.PASSWORD = new String(password.getPassword());
+		
 		if(e.getSource() == loginButton)
-		{
-			login();
-		}
+			connect();
 		else if(e.getSource() == registerButton)
-		{
-			Main.registering = true;
-			login();
-		}
+			register();
 	}
 
 	@Override
 	public void keyPressed(KeyEvent e) 
 	{
+		Resource.USERNAME = name.getText();
+		Resource.PASSWORD = new String(password.getPassword());
+		
 		if(e.getKeyCode() == KeyEvent.VK_ENTER)
-		{
-			login();
-		}
-		else if(e.getSource() == registerButton)
-		{
-			Main.registering = true;
-			login();
-		}
+			connect();
 	}
 
 	@Override

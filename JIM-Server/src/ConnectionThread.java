@@ -9,6 +9,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 
 import javax.net.ssl.SSLSocket;
+import javax.swing.JOptionPane;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -35,8 +36,6 @@ public class ConnectionThread
 		}
 		catch(Exception e) { e.printStackTrace(); }
 		socket.setEnabledCipherSuites(socket.getSupportedCipherSuites());
-		System.out.println("Socket: "+socket.isConnected());
-		System.out.println(bReader);
 		thread = new Thread()
 		{
 			@Override
@@ -44,8 +43,6 @@ public class ConnectionThread
 			{
 				try
 				{
-					System.out.println(socket.getInetAddress() + ":" + socket.getPort() + " connected!");
-					
 					while(!socket.isClosed())
 					{
 						String clientMessage = bReader.readLine();
@@ -59,24 +56,14 @@ public class ConnectionThread
 							}
 							catch(ParseException pe) { pe.printStackTrace(); }
 							
-							String action = (String)incomingJSON.get("action");
-							System.out.println("Action: "+action);
-							if(action.equals("connect"))
+							if(((String)incomingJSON.get("action")).equals("connect"))
 								connect(id, (String)incomingJSON.get("userName"), (String)incomingJSON.get("password"), socket.getInetAddress().toString());
-							else if(action.equals("register")){
-								if(register((String)incomingJSON.get("userName"), (String)incomingJSON.get("password")))
-									connect(id, (String)incomingJSON.get("userName"), (String)incomingJSON.get("password"), socket.getInetAddress().toString());
-							}
-							else if(action.equals("disconnect"))
+							else if(((String)incomingJSON.get("action")).equals("register"))
+								register((String)incomingJSON.get("userName"), (String)incomingJSON.get("password"));
+							else if(((String)incomingJSON.get("action")).equals("requestUserList"))
+								sendUserList();
+							else if(((String)incomingJSON.get("action")).equals("disconnect"))
 								disconnect(id);
-							else if(action.equals("link")){
-								System.out.println("Link Request Received.");
-								sendLinkRequest(
-										Integer.parseInt((String)incomingJSON.get("remoteUserId")),
-										socket.getInetAddress().toString(), 
-										Integer.parseInt((String)incomingJSON.get("port"))
-										);
-							}
 						}
 					}
 				}
@@ -90,10 +77,6 @@ public class ConnectionThread
 	{
 		ArrayList<String> dbUsernames = new ArrayList<String>();
 		ArrayList<String> dbPasswords = new ArrayList<String>();
-
-		JSONObject json = new JSONObject();
-		json.put("source", "server");
-		json.put("action", "register");
 		
 		try
 		{
@@ -119,28 +102,38 @@ public class ConnectionThread
 			{
 				if(dbPasswords.get(i).equals(password))
 				{
-					sendUserListToClient();
-					sendUserToClients(id, username, ip);
+					JSONObject json = new JSONObject();
+					json.put("action", "addUser");
+					json.put("userId", id);
+					json.put("userName", username);
+					json.put("userIp", ip);
+
+					Main.writeToAll(json.toJSONString());
+					
+					for(int j = 0; j < Main.userList.size(); j++)
+					{
+						if(Main.userList.get(i).getName().compareTo(username) > 0)
+						{
+							Main.userList.add(new User(id, username, ip));
+							System.out.println("\"" + username + "\" has logged in!");
+							return;
+						}
+					}
 					
 					Main.userList.add(new User(id, username, ip));
 					System.out.println("\"" + username + "\" has logged in!");
 				}
 				else
-				{
-					System.out.print(username+" password was incorrect");
-					json.put("result", "fail");
-					writeToClient(json.toJSONString()+"\n");
-				}
+					writeToClient(makeJSONMessage("The password entered is incorrect!", JOptionPane.ERROR_MESSAGE));
+				
 				return;
 			}
 		}
-
-		System.out.print(username+" was not registered");
-		json.put("result", "fail");
-		writeToClient(json.toJSONString()+"\n");
+		
+		writeToClient(makeJSONMessage("\"" + username + "\" is not registered!", JOptionPane.ERROR_MESSAGE));
 	}
 	
-	public boolean register(String username, String password) throws ClassNotFoundException
+	public void register(String username, String password) throws ClassNotFoundException
 	{
 		ArrayList<String> dbUsernames = new ArrayList<String>();
 		try
@@ -160,11 +153,6 @@ public class ConnectionThread
 		}
 		catch(ClassNotFoundException | SQLException e) { e.printStackTrace(); }
 		
-
-		JSONObject json = new JSONObject();
-		json.put("source", "server");
-		json.put("action", "register");
-		
 		if(!dbUsernames.contains(username))
 		{
 			try
@@ -180,17 +168,25 @@ public class ConnectionThread
 				conn.close();
 			}
 			catch(ClassNotFoundException | SQLException e) { e.printStackTrace(); }
-
-			json.put("result", "success");
-			writeToClient(json.toJSONString()+"\n");
-			return true;
+			writeToClient(makeJSONMessage(username + " was successfully registered!", JOptionPane.INFORMATION_MESSAGE));
 		}
 		else
-		{
-			json.put("result", "fail");
-			writeToClient(json.toJSONString()+"\n");
-			return false;
-		}
+			writeToClient(makeJSONMessage(username + " is already registered!", JOptionPane.ERROR_MESSAGE));
+	}
+	
+	public void sendUserList()
+	{
+		 JSONArray connectionJSON = new JSONArray();
+         for(int i = 0; i < Main.userList.size(); i++)
+         {
+                 JSONObject JSON = new JSONObject();
+                 JSON.put("userId", Main.userList.get(i).getId());
+                 JSON.put("userName", Main.userList.get(i).getName());
+                 JSON.put("userIp", Main.userList.get(i).getIp());
+                 
+                 connectionJSON.add(JSON);
+         }
+         writeToClient(connectionJSON.toJSONString());
 	}
 	
 	public void disconnect(int id)
@@ -223,62 +219,16 @@ public class ConnectionThread
 		catch(IOException ioe) { ioe.printStackTrace(); }
 	}
 	
-	public void sendUserListToClient()
+	public String makeJSONMessage(String message, int messageType)
 	{
-		JSONArray connectionJSON = new JSONArray();
-		for(int i = 0; i < Main.userList.size(); i++)
-		{
-			JSONObject JSON = new JSONObject();
-			JSON.put("userId", Main.userList.get(i).getId());
-			JSON.put("userName", Main.userList.get(i).getName());
-			JSON.put("userIp", Main.userList.get(i).getIp());
-			
-			connectionJSON.add(JSON);
-		}
-		writeToClient(connectionJSON.toJSONString());
-	}
-
-	public void sendUserToClients(int id, String uname, String ip)
-	{
-		JSONObject JSON = new JSONObject();
-		JSON.put("source", "server");
-		JSON.put("action", "addUser");
-		JSON.put("userId", Integer.toString(id));
-		JSON.put("userName", uname);
-		JSON.put("userIp", ip);
-		Main.writeToAll(JSON.toJSONString());
+		JSONObject jMessage = new JSONObject();
+		jMessage.put("source", "server");
+		jMessage.put("action", "message");
+		jMessage.put("serverMessage", message);
+		jMessage.put("type", Integer.toString(messageType));
 		
+		return jMessage.toJSONString();
 	}
+	
 	public int getId() { return id; }
-	
-	public void sendLinkRequest(int targetId, String ip, int port){
-		System.out.println("SendLinkRequest Entry Point");
-		JSONObject JSON = new JSONObject();
-		JSON.put("source", "server");
-		JSON.put("action", "p2p_request");
-		JSON.put("initiatorId", Integer.toString(id));
-		JSON.put("initiatorIP", ip);
-		JSON.put("initiatorPort", Integer.toString(port));
-		System.out.println("Search for client");
-		// find client we want to send request to
-		ConnectionThread tmp = null;
-		Boolean found = false;
-		for(int i = 0; i < Main.clientThreads.size(); i++){
-			tmp = Main.clientThreads.get(i);
-			if(tmp.id == targetId){
-				found = true;
-				break;
-			}
-		}
-		if(found == false){
-			System.out.println("Target client in P2P not found. ID = "+targetId);
-			return;
-		}
-		System.out.println("Found client, sending P2P request");
-		if(tmp != null)
-			tmp.writeToClient(JSON.toJSONString());
-		else
-			System.out.println("No connection threads available.");
-	}
-	
 }
