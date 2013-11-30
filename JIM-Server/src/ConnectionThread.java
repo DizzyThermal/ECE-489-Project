@@ -57,7 +57,7 @@ public class ConnectionThread
 							catch(ParseException pe) { pe.printStackTrace(); }
 							
 							if(((String)incomingJSON.get("action")).equals("connect"))
-								connect(id, (String)incomingJSON.get("userName"), (String)incomingJSON.get("password"), socket.getInetAddress().toString());
+								connect(id, (String)incomingJSON.get("userName"), (String)incomingJSON.get("password"), socket.getInetAddress().toString().replaceAll("/", ""));
 							else if(((String)incomingJSON.get("action")).equals("register"))
 								register((String)incomingJSON.get("userName"), (String)incomingJSON.get("password"));
 							else if(((String)incomingJSON.get("action")).equals("requestUserList"))

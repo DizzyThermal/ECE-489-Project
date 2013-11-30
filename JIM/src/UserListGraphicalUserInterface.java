@@ -157,6 +157,7 @@ public class UserListGraphicalUserInterface extends JFrame implements MouseListe
 	
 	public void initGUI()
 	{
+		usersPanel.setPreferredSize(new Dimension(225, 550));
 		add(users);
 		addWindowListener(this);
 	}

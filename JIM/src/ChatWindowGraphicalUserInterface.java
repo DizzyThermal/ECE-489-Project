@@ -1,26 +1,17 @@
-import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.net.UnknownHostException;
 
-import javax.net.ssl.SSLServerSocket;
-import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
-import javax.swing.JViewport;
 
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -79,9 +70,17 @@ public class ChatWindowGraphicalUserInterface extends JFrame implements KeyListe
 	
 	public void initGUI()
 	{
-		setLayout(new BorderLayout());
-		// GUI
+		setResizable(false);
+		setSize(600,400);
+		setLayout(new FlowLayout());
+		
+		messageScrollPane.setPreferredSize(new Dimension(550, 325));
 		messageArea.setEditable(false);
+		
+		messageField.setPreferredSize(new Dimension(550, 25));
+		
+		add(messageScrollPane);
+		add(messageField);
 	}
 	
 	public void append(String message)
