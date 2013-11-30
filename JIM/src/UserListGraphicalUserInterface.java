@@ -111,7 +111,7 @@ public class UserListGraphicalUserInterface extends JFrame implements MouseListe
 							if(clientId >= 0)
 								connectedUsers.get(clientId).append((String)incomingJSON.get("userMessage"));
 							else
-								connectedUsers.add(new ChatWindowGraphicalUserInterface((int)(long)incomingJSON.get("userId"), (String)incomingJSON.get("userName"), (String)incomingJSON.get("userMessage")));
+								connectedUsers.add(new ChatWindowGraphicalUserInterface((int)(long)incomingJSON.get("senderId"), (String)incomingJSON.get("userName"), (String)incomingJSON.get("userMessage")));
 						}
 					}
 				}

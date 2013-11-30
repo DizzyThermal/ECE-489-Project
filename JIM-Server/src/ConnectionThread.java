@@ -246,10 +246,22 @@ public class ConnectionThread
 				json.put("action", "message");
 				json.put("userId", id);
 				json.put("userMessage", message);
-				
+				json.put("userName", getUserNameById(this.id));
+				json.put("senderId", this.id);
 				Main.clientThreads.get(i).writeToClient(json.toJSONString());
 			}
 		}
+	}
+	
+	public String getUserNameById(int id)
+	{
+		for(int i = 0; i < Main.userList.size(); i++)
+		{
+			if(Main.userList.get(i).getId() == id)
+				return Main.userList.get(i).getName();
+		}
+		
+		return null;
 	}
 	
 	public String makeJSONMessage(String message, int messageType)
