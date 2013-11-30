@@ -158,6 +158,7 @@ public class UserListGraphicalUserInterface extends JFrame implements MouseListe
 	public void initGUI()
 	{
 		usersPanel.setPreferredSize(new Dimension(225, 550));
+		setResizable(false);
 		add(users);
 		addWindowListener(this);
 	}
@@ -178,20 +179,38 @@ public class UserListGraphicalUserInterface extends JFrame implements MouseListe
 		if(username.equals(Resource.USERNAME))
 			return;
 		
+		int index = -1;
+		
 		for(int i = 0; i < userList.size(); i++)
 		{
 			if(username.compareTo(userList.get(i).getName()) > 0)
 			{
-				userList.add(i, new User(id, username, ip));
-				JLabel jL = new JLabel(username);
-				jL.setPreferredSize(new Dimension(200, 25));
-				jL.addMouseListener(this);
-				userLabels.add(i, jL);
-				usersPanel.add(jL, i);
-				
+				index = i;
 				break;
 			}
-		}	
+		}
+		
+		if(index >= 0)
+		{
+			userList.add(index, new User(id, username, ip));
+			JLabel jL = new JLabel(username);
+			jL.setPreferredSize(new Dimension(200, 25));
+			jL.addMouseListener(this);
+			userLabels.add(index, jL);
+			usersPanel.add(jL, index);
+		}
+		else
+		{
+			userList.add(new User(id, username, ip));
+			JLabel jL = new JLabel(username);
+			jL.setPreferredSize(new Dimension(200, 25));
+			jL.addMouseListener(this);
+			userLabels.add(jL);
+			usersPanel.add(jL);
+		}
+		
+		validate();
+		repaint();
 	}
 	
 	public void removeUser(int id)
@@ -214,6 +233,10 @@ public class UserListGraphicalUserInterface extends JFrame implements MouseListe
 		for(int i = 0; i < json.size(); i++)
 		{
 			JSONObject jsonObj = (JSONObject)json.get(i);
+			
+			if(jsonObj.get("userName").equals(Resource.USERNAME))
+				continue;
+			
 			userList.add(new User((int)(long)jsonObj.get("userId"), (String)jsonObj.get("userName"), (String)jsonObj.get("userIp")));
 			JLabel jL = new JLabel((String)jsonObj.get("userName"));
 			jL.setPreferredSize(new Dimension(200, 25));

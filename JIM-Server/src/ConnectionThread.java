@@ -3,6 +3,9 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.UnknownHostException;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -77,6 +80,17 @@ public class ConnectionThread
 	
 	public void connect(int id, String username, String password, String ip)
 	{
+		if(ip.equals("127.0.0.1"))
+		{
+			try
+			{
+				URL whatismyip = new URL("http://checkip.amazonaws.com");
+				BufferedReader in = new BufferedReader(new InputStreamReader(whatismyip.openStream()));
+
+				ip = in.readLine();
+			}
+			catch(IOException ioe) { ioe.printStackTrace(); }
+		}
 		ArrayList<String> dbUsernames = new ArrayList<String>();
 		ArrayList<String> dbPasswords = new ArrayList<String>();
 		

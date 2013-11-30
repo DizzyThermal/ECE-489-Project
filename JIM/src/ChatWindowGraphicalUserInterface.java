@@ -5,6 +5,8 @@ import java.awt.event.KeyListener;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 
 import javax.net.ssl.SSLSocket;
 import javax.swing.JFrame;
@@ -34,6 +36,13 @@ public class ChatWindowGraphicalUserInterface extends JFrame implements KeyListe
 		this.chatSocket = chatSocket;
 		this.chatSocket.setEnabledCipherSuites(chatSocket.getSupportedCipherSuites());
 		this.username = username;
+		
+		try
+		{
+			bWriter = new BufferedWriter(new OutputStreamWriter(chatSocket.getOutputStream()));
+			bReader = new BufferedReader(new InputStreamReader(chatSocket.getInputStream()));
+		}
+		catch(IOException ioe) { ioe.printStackTrace(); }
 		
 		initGUI();
 		
