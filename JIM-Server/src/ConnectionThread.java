@@ -3,12 +3,12 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.UnknownHostException;
+import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 
 import javax.net.ssl.SSLSocket;
@@ -18,9 +18,6 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-
-import com.mysql.jdbc.Connection;
-import com.mysql.jdbc.Statement;
 
 public class ConnectionThread 	 
 {
@@ -96,21 +93,21 @@ public class ConnectionThread
 		
 		try
 		{
-			Class.forName("com.mysql.jdbc.Driver");
-			Connection conn = (Connection)DriverManager.getConnection("jdbc:mysql://localhost:3306/ece489project", Resource.MYSQL_USER, Resource.MYSQL_PASS);
+			Class.forName("org.sqlite.JDBC");
+			Connection conn = DriverManager.getConnection("jdbc:sqlite:Users.db");
 			Statement stmt = (Statement)conn.createStatement();
 			
 			String query = "SELECT * FROM users;";
 			ResultSet rs = stmt.executeQuery(query);
 			while (rs.next()) {
-				dbUsernames.add(rs.getString("username"));
-				dbPasswords.add(rs.getString("password"));
+			dbUsernames.add(rs.getString("username"));
+			dbPasswords.add(rs.getString("password"));
 			}
 			rs.close();
 			stmt.close();
 			conn.close();
 		}
-		catch(ClassNotFoundException | SQLException e) { e.printStackTrace(); }
+		catch (SQLException | ClassNotFoundException e) { e.printStackTrace(); }
 		
 		for(int i = 0; i < dbUsernames.size(); i++)
 		{
@@ -163,8 +160,8 @@ public class ConnectionThread
 		ArrayList<String> dbUsernames = new ArrayList<String>();
 		try
 		{
-			Class.forName("com.mysql.jdbc.Driver");
-			Connection conn = (Connection)DriverManager.getConnection("jdbc:mysql://localhost:3306/ece489project", Resource.MYSQL_USER, Resource.MYSQL_PASS);
+			Class.forName("org.sqlite.JDBC");
+			Connection conn = (Connection)DriverManager.getConnection("jdbc:sqlite:Users.db");
 			Statement stmt = (Statement)conn.createStatement();
 			
 			String query = "SELECT username FROM users;";
@@ -182,8 +179,8 @@ public class ConnectionThread
 		{
 			try
 			{
-				Class.forName("com.mysql.jdbc.Driver");
-				Connection conn = (Connection)DriverManager.getConnection("jdbc:mysql://localhost:3306/ece489project", Resource.MYSQL_USER, Resource.MYSQL_PASS);
+				Class.forName("org.sqlite.JDBC");
+				Connection conn = (Connection)DriverManager.getConnection("jdbc:sqlite:Users.db");
 				Statement stmt = (Statement)conn.createStatement();
 				
 				String query = "INSERT INTO users VALUES(\"" + username + "\", \"" + password + "\")";
