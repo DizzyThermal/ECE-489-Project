@@ -32,7 +32,7 @@ public class UserListGraphicalUserInterface extends JFrame implements MouseListe
 	public JScrollPane users = new JScrollPane(usersPanel);
 	public ArrayList<JLabel> userLabels = new ArrayList<JLabel>();
 	
-	public ArrayList<ChatWindowGraphicalUserInterface> connectedUsers = new ArrayList<ChatWindowGraphicalUserInterface>();
+	public static ArrayList<ChatWindowGraphicalUserInterface> connectedUsers = new ArrayList<ChatWindowGraphicalUserInterface>();
 	public static ArrayList<User> userList = new ArrayList<User>();
 	
 	public SSLSocket clientSocket;
@@ -108,7 +108,7 @@ public class UserListGraphicalUserInterface extends JFrame implements MouseListe
 					else if(incomingJSON != null)
 					{
 						if(((String)incomingJSON.get("action")).equals("addUser"))
-							addUser((int)(long)incomingJSON.get("userId"), (String)incomingJSON.get("userName"), (String)incomingJSON.get("userIp"));
+							addUser((int)(long)incomingJSON.get("userId"), (String)incomingJSON.get("userName"), (String)incomingJSON.get("userIp"), (int)(long)incomingJSON.get("userPort"));
 						else if(((String)incomingJSON.get("action")).equals("removeUser"))
 							removeUser(Integer.parseInt((String)incomingJSON.get("userId")));
 						else if(((String)incomingJSON.get("action")).equals("port"))
@@ -146,7 +146,7 @@ public class UserListGraphicalUserInterface extends JFrame implements MouseListe
 					try
 					{
 						if(listeningSocket.getInetAddress().toString() != "0.0.0.0/0.0.0.0" && !isConnected(listeningSocket.getInetAddress().toString()))
-							connectedUsers.add(new ChatWindowGraphicalUserInterface((SSLSocket)listeningSocket.accept(), getUserNameByIp(listeningSocket.getInetAddress().toString().split("/")[0])));
+							connectedUsers.add(new ChatWindowGraphicalUserInterface((SSLSocket)listeningSocket.accept(), getUserNameByIp(listeningSocket.getInetAddress().toString().replace("/", ""))));
 					}
 					catch (Exception e) { e.printStackTrace(); }
 				}
@@ -165,16 +165,16 @@ public class UserListGraphicalUserInterface extends JFrame implements MouseListe
 	
 	public static boolean isConnected(String ip)
 	{
-		for(int i = 0; i < userList.size(); i++)
+		for(int i = 0; i < connectedUsers.size(); i++)
 		{
-			if(userList.get(i).getIp().equals(ip))
+			if(connectedUsers.get(i).getIp().equals(ip))
 				return true;
 		}
 		
 		return false;
 	}
 	
-	public void addUser(int id, String username, String ip)
+	public void addUser(int id, String username, String ip, int port)
 	{
 		if(username.equals(Resource.USERNAME))
 			return;
@@ -192,7 +192,7 @@ public class UserListGraphicalUserInterface extends JFrame implements MouseListe
 		
 		if(index >= 0)
 		{
-			userList.add(index, new User(id, username, ip));
+			userList.add(index, new User(id, username, ip, port));
 			JLabel jL = new JLabel(username);
 			jL.setPreferredSize(new Dimension(200, 25));
 			jL.addMouseListener(this);
@@ -201,7 +201,7 @@ public class UserListGraphicalUserInterface extends JFrame implements MouseListe
 		}
 		else
 		{
-			userList.add(new User(id, username, ip));
+			userList.add(new User(id, username, ip, port));
 			JLabel jL = new JLabel(username);
 			jL.setPreferredSize(new Dimension(200, 25));
 			jL.addMouseListener(this);
@@ -237,7 +237,7 @@ public class UserListGraphicalUserInterface extends JFrame implements MouseListe
 			if(jsonObj.get("userName").equals(Resource.USERNAME))
 				continue;
 			
-			userList.add(new User((int)(long)jsonObj.get("userId"), (String)jsonObj.get("userName"), (String)jsonObj.get("userIp")));
+			userList.add(new User((int)(long)jsonObj.get("userId"), (String)jsonObj.get("userName"), (String)jsonObj.get("userIp"), (int)(long)jsonObj.get("userPort")));
 			JLabel jL = new JLabel((String)jsonObj.get("userName"));
 			jL.setPreferredSize(new Dimension(200, 25));
 			jL.addMouseListener(this);

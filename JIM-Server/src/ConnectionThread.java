@@ -60,7 +60,7 @@ public class ConnectionThread
 							catch(ParseException pe) { pe.printStackTrace(); }
 							
 							if(((String)incomingJSON.get("action")).equals("connect"))
-								connect(id, (String)incomingJSON.get("userName"), (String)incomingJSON.get("password"), socket.getInetAddress().toString().replaceAll("/", ""));
+								connect(id, (String)incomingJSON.get("userName"), (String)incomingJSON.get("password"), socket.getInetAddress().toString().replace("/", ""));
 							else if(((String)incomingJSON.get("action")).equals("register"))
 								register((String)incomingJSON.get("userName"), (String)incomingJSON.get("password"));
 							else if(((String)incomingJSON.get("action")).equals("requestUserList"))
@@ -123,18 +123,19 @@ public class ConnectionThread
 					json.put("userId", id);
 					json.put("userName", username);
 					json.put("userIp", ip);
+					json.put("userPort", (++Resource.LISTENING_PORT));
 					
 					for(int j = 0; j < Main.userList.size(); j++)
 					{
 						if(Main.userList.get(j).getName().compareTo(username) > 0)
 						{
-							Main.userList.add(new User(id, username, ip));
+							Main.userList.add(new User(id, username, ip, Resource.LISTENING_PORT));
 							System.out.println("\"" + username + "\" has logged in!");
 							return;
 						}
 					}
 					
-					Main.userList.add(new User(id, username, ip));
+					Main.userList.add(new User(id, username, ip, Resource.LISTENING_PORT));
 					System.out.println("\"" + username + "\" has logged in!");
 					
 					JSONObject jsonConnected = new JSONObject();
@@ -203,6 +204,7 @@ public class ConnectionThread
                  JSON.put("userId", Main.userList.get(i).getId());
                  JSON.put("userName", Main.userList.get(i).getName());
                  JSON.put("userIp", Main.userList.get(i).getIp());
+                 JSON.put("userPort", Main.userList.get(i).getPort());
                  
                  connectionJSON.add(JSON);
          }
@@ -213,7 +215,7 @@ public class ConnectionThread
 	{
 		JSONObject JSON = new JSONObject();
 		JSON.put("action", "port");
-		JSON.put("port", Integer.toString((Resource.LISTENING_PORT++)));
+		JSON.put("port", Integer.toString(Resource.LISTENING_PORT));
 		
 		writeToClient(JSON.toJSONString());
 	}

@@ -30,12 +30,14 @@ public class ChatWindowGraphicalUserInterface extends JFrame implements KeyListe
 	
 	public Thread thread;
 	public String username;
-
+	public String ip;
+	
 	ChatWindowGraphicalUserInterface(final SSLSocket chatSocket, final String username)
 	{
 		this.chatSocket = chatSocket;
 		this.chatSocket.setEnabledCipherSuites(chatSocket.getSupportedCipherSuites());
 		this.username = username;
+		this.ip = chatSocket.getInetAddress().toString().replace("/", "");
 		
 		try
 		{
@@ -118,6 +120,8 @@ public class ChatWindowGraphicalUserInterface extends JFrame implements KeyListe
 			}
 		}
 	}
+	
+	public String getIp() { return ip; }
 	
 	@Override
 	public void keyTyped(KeyEvent e) {}
