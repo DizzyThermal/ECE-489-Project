@@ -65,8 +65,8 @@ public class ConnectionThread
 								register((String)incomingJSON.get("userName"), (String)incomingJSON.get("password"));
 							else if(((String)incomingJSON.get("action")).equals("requestUserList"))
 								sendUserList();
-							else if(((String)incomingJSON.get("action")).equals("requestPort"))
-								dishAPortOut();
+							else if(((String)incomingJSON.get("action")).equals("requestUserList"))
+								relayMessage((int)(long)incomingJSON.get("userId"), (String)incomingJSON.get("userMessage"));
 							else if(((String)incomingJSON.get("action")).equals("disconnect"))
 								disconnect(id);
 						}
@@ -122,20 +122,18 @@ public class ConnectionThread
 					json.put("action", "addUser");
 					json.put("userId", id);
 					json.put("userName", username);
-					json.put("userIp", ip);
-					json.put("userPort", (++Resource.LISTENING_PORT));
 					
 					for(int j = 0; j < Main.userList.size(); j++)
 					{
 						if(Main.userList.get(j).getName().compareTo(username) > 0)
 						{
-							Main.userList.add(new User(id, username, ip, Resource.LISTENING_PORT));
+							Main.userList.add(new User(id, username, ip));
 							System.out.println("\"" + username + "\" has logged in!");
 							return;
 						}
 					}
 					
-					Main.userList.add(new User(id, username, ip, Resource.LISTENING_PORT));
+					Main.userList.add(new User(id, username, ip));
 					System.out.println("\"" + username + "\" has logged in!");
 					
 					JSONObject jsonConnected = new JSONObject();
@@ -203,21 +201,10 @@ public class ConnectionThread
                  JSONObject JSON = new JSONObject();
                  JSON.put("userId", Main.userList.get(i).getId());
                  JSON.put("userName", Main.userList.get(i).getName());
-                 JSON.put("userIp", Main.userList.get(i).getIp());
-                 JSON.put("userPort", Main.userList.get(i).getPort());
                  
                  connectionJSON.add(JSON);
          }
          writeToClient(connectionJSON.toJSONString());
-	}
-	
-	public void dishAPortOut()
-	{
-		JSONObject JSON = new JSONObject();
-		JSON.put("action", "port");
-		JSON.put("port", Integer.toString(Resource.LISTENING_PORT));
-		
-		writeToClient(JSON.toJSONString());
 	}
 	
 	public void disconnect(int id)
@@ -247,6 +234,22 @@ public class ConnectionThread
 			bWriter.flush();
 		}
 		catch(IOException ioe) { ioe.printStackTrace(); }
+	}
+	
+	public void relayMessage(int id, String message)
+	{
+		for(int i = 0; i < Main.userList.size(); i++)
+		{
+			if(Main.userList.get(i).getId() == id)
+			{
+				JSONObject json = new JSONObject();
+				json.put("action", "message");
+				json.put("userId", id);
+				json.put("userMessage", message);
+				
+				Main.clientThreads.get(i).writeToClient(json.toJSONString());
+			}
+		}
 	}
 	
 	public String makeJSONMessage(String message, int messageType)

@@ -38,7 +38,7 @@ public class UserListGraphicalUserInterface extends JFrame implements MouseListe
 	public SSLSocket clientSocket;
 	public static SSLServerSocket listeningSocket;
 
-	public BufferedWriter bWriter;
+	public static BufferedWriter bWriter;
 	public BufferedReader bReader;
 	public ArrayList<Integer> portList = new ArrayList<Integer>();
 	
@@ -65,12 +65,6 @@ public class UserListGraphicalUserInterface extends JFrame implements MouseListe
 			jsonUserList.put("action", "requestUserList");
 			
 			bWriter.write(jsonUserList.toJSONString() + "\n");
-            bWriter.flush();
-            
-            JSONObject jsonPort = new JSONObject();
-            jsonPort.put("action", "requestPort");
-            
-            bWriter.write(jsonPort.toJSONString() + "\n");
             bWriter.flush();
 		}
  		catch (Exception e) { e.printStackTrace(); }
@@ -111,48 +105,19 @@ public class UserListGraphicalUserInterface extends JFrame implements MouseListe
 							addUser((int)(long)incomingJSON.get("userId"), (String)incomingJSON.get("userName"), (String)incomingJSON.get("userIp"), (int)(long)incomingJSON.get("userPort"));
 						else if(((String)incomingJSON.get("action")).equals("removeUser"))
 							removeUser(Integer.parseInt((String)incomingJSON.get("userId")));
-						else if(((String)incomingJSON.get("action")).equals("port"))
+						else if(((String)incomingJSON.get("action")).equals("message"))
 						{
-							Resource.LISTENING_PORT = (String)incomingJSON.get("port");
-							connected = true;
+							int clientId = checkConnection((int)(long)incomingJSON.get("userId"));
+							if(clientId >= 0)
+								connectedUsers.get(clientId).append((String)incomingJSON.get("userMessage"));
+							else
+								connectedUsers.add(new ChatWindowGraphicalUserInterface((int)(long)incomingJSON.get("userId"), (String)incomingJSON.get("userName"), (String)incomingJSON.get("userMessage")));
 						}
 					}
 				}
 			}
 		});
 		t1.start();
-		
-		while(!connected)
-		{
-			try { Thread.sleep(1); }
-			catch (InterruptedException ie) { ie.printStackTrace(); }
-		}
-
-		t2 = (new Thread()
-		{
-			@Override
-			public void run()
-			{
-				try
-				{
-					listeningSocket = (SSLServerSocket) SSLServerSocketFactory.getDefault().createServerSocket(Integer.parseInt(Resource.LISTENING_PORT));
-				}
-				catch (Exception e) { e.printStackTrace(); }
-
-				System.out.println("Listening on Port: " + Resource.LISTENING_PORT);
-
-				while(true) 
-				{
-					try
-					{
-						if(listeningSocket.getInetAddress().toString() != "0.0.0.0/0.0.0.0" && !isConnected(listeningSocket.getInetAddress().toString()))
-							connectedUsers.add(new ChatWindowGraphicalUserInterface((SSLSocket)listeningSocket.accept(), getUserNameByIp(listeningSocket.getInetAddress().toString().replace("/", ""))));
-					}
-					catch (Exception e) { e.printStackTrace(); }
-				}
-			}
-		});
-		t2.start();
 	}
 	
 	public void initGUI()
@@ -163,15 +128,15 @@ public class UserListGraphicalUserInterface extends JFrame implements MouseListe
 		addWindowListener(this);
 	}
 	
-	public static boolean isConnected(String ip)
+	public static int checkConnection(int id)
 	{
 		for(int i = 0; i < connectedUsers.size(); i++)
 		{
-			if(connectedUsers.get(i).getIp().equals(ip))
-				return true;
+			if(connectedUsers.get(i).getId() == id)
+				return i;
 		}
 		
-		return false;
+		return -1;
 	}
 	
 	public void addUser(int id, String username, String ip, int port)
@@ -192,7 +157,7 @@ public class UserListGraphicalUserInterface extends JFrame implements MouseListe
 		
 		if(index >= 0)
 		{
-			userList.add(index, new User(id, username, ip, port));
+			userList.add(index, new User(id, username));
 			JLabel jL = new JLabel(username);
 			jL.setPreferredSize(new Dimension(200, 25));
 			jL.addMouseListener(this);
@@ -201,7 +166,7 @@ public class UserListGraphicalUserInterface extends JFrame implements MouseListe
 		}
 		else
 		{
-			userList.add(new User(id, username, ip, port));
+			userList.add(new User(id, username));
 			JLabel jL = new JLabel(username);
 			jL.setPreferredSize(new Dimension(200, 25));
 			jL.addMouseListener(this);
@@ -237,7 +202,7 @@ public class UserListGraphicalUserInterface extends JFrame implements MouseListe
 			if(jsonObj.get("userName").equals(Resource.USERNAME))
 				continue;
 			
-			userList.add(new User((int)(long)jsonObj.get("userId"), (String)jsonObj.get("userName"), (String)jsonObj.get("userIp"), (int)(long)jsonObj.get("userPort")));
+			userList.add(new User((int)(long)jsonObj.get("userId"), (String)jsonObj.get("userName")));
 			JLabel jL = new JLabel((String)jsonObj.get("userName"));
 			jL.setPreferredSize(new Dimension(200, 25));
 			jL.addMouseListener(this);
@@ -265,16 +230,20 @@ public class UserListGraphicalUserInterface extends JFrame implements MouseListe
 		t1.stop();
 		System.exit(0);
 	}
-
-	public String getUserNameByIp(String ip)
+	
+	public static void sendMessageToServer(int id, String message)
 	{
-		for(int i = 0; i < userList.size(); i++)
-		{
-			if(userList.get(i).getIp().equals(ip))
-				return userList.get(i).getName();
-		}
+		JSONObject json = new JSONObject();
+		json.put("action", "message");
+		json.put("userId", id);
+		json.put("userMessage", message);
 		
-		return null;
+		try
+		{
+			bWriter.write(json.toJSONString() + "\n");
+	        bWriter.flush();
+		}
+		catch (IOException ioe) { ioe.printStackTrace(); }
 	}
 	
 	@Override
@@ -284,15 +253,11 @@ public class UserListGraphicalUserInterface extends JFrame implements MouseListe
 		{
 			if(userLabels.get(i) == e.getSource())
 			{
-				try
-				{
-					connectedUsers.add(new ChatWindowGraphicalUserInterface((SSLSocket)SSLSocketFactory.getDefault().createSocket(userList.get(i).getIp(), Integer.parseInt(Resource.LISTENING_PORT)), getUserNameByIp(userList.get(i).getIp())));
-				}
-				catch (NumberFormatException | IOException e1) { e1.printStackTrace(); }
+				connectedUsers.add(new ChatWindowGraphicalUserInterface(userList.get(i).getId(), userList.get(i).getName(), null));
 			}
 		}
 	}
-
+	
 	@Override
 	public void mousePressed(MouseEvent e) {}
 

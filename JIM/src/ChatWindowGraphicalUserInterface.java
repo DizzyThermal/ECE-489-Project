@@ -24,62 +24,19 @@ public class ChatWindowGraphicalUserInterface extends JFrame implements KeyListe
 	public JScrollPane messageScrollPane = new JScrollPane(messageArea);
 	public JTextField messageField = new JTextField();
 	
-	public SSLSocket chatSocket;
-	public BufferedWriter bWriter;
-	public BufferedReader bReader;
-	
 	public Thread thread;
 	public String username;
-	public String ip;
+	public int id;
 	
-	ChatWindowGraphicalUserInterface(final SSLSocket chatSocket, final String username)
+	ChatWindowGraphicalUserInterface(int id, String username, String initialMessage)
 	{
-		this.chatSocket = chatSocket;
-		this.chatSocket.setEnabledCipherSuites(chatSocket.getSupportedCipherSuites());
+		this.id = id;
 		this.username = username;
-		this.ip = chatSocket.getInetAddress().toString().replace("/", "");
 		
-		try
-		{
-			bWriter = new BufferedWriter(new OutputStreamWriter(chatSocket.getOutputStream()));
-			bReader = new BufferedReader(new InputStreamReader(chatSocket.getInputStream()));
-		}
-		catch(IOException ioe) { ioe.printStackTrace(); }
-		
-		initGUI();
-		
-		
-		thread = (new Thread()
-		{
-			@Override
-			public void run()
-			{
-				while(!chatSocket.isClosed())
-				{
-					String incomingMessage = null;
-					try
-					{
-						incomingMessage = bReader.readLine();
-					}
-					catch(IOException ioe) { ioe.printStackTrace(); }
-					if((incomingMessage != null) && !incomingMessage.equals("") && !incomingMessage.equals("[]"))
-						continue;
-					
-					// We Got Something!
-					JSONObject incomingJSON = null;
-					try
-					{
-						incomingJSON = (JSONObject)(new JSONParser().parse(incomingMessage));
-					}
-					catch (ParseException e) { e.printStackTrace(); }
-					append("\n" + username + ": " + incomingJSON.get("message"));
-				}
-			}
-		});
-		thread.start();
+		initGUI(initialMessage);
 	}
 	
-	public void initGUI()
+	public void initGUI(String initialMessage)
 	{
 		setResizable(false);
 		setSize(600,400);
@@ -92,6 +49,9 @@ public class ChatWindowGraphicalUserInterface extends JFrame implements KeyListe
 		
 		add(messageScrollPane);
 		add(messageField);
+		
+		if(initialMessage != null)
+			append(initialMessage);
 	}
 	
 	public void append(String message)
@@ -109,19 +69,16 @@ public class ChatWindowGraphicalUserInterface extends JFrame implements KeyListe
 				messageArea.setText(messageArea.getText() + "\n" + Resource.USERNAME + ": " + messageField.getText());
 				
 				JSONObject json = new JSONObject();
-				json.put("message", messageField.getText());
+				json.put("action", "message");
+				json.put("userId", id);
+				json.put("userMessage", messageField.getText());
 				
-				try
-				{
-					bWriter.write(json.toJSONString() + "\n");
-					bWriter.flush();
-				}
-				catch (IOException e1) { e1.printStackTrace(); }
+				UserListGraphicalUserInterface.sendMessageToServer(id, json.toJSONString());
 			}
 		}
 	}
 	
-	public String getIp() { return ip; }
+	public int getId() { return id; };
 	
 	@Override
 	public void keyTyped(KeyEvent e) {}
