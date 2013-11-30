@@ -119,9 +119,7 @@ public class ConnectionGraphicalUserInterface extends JFrame implements ActionLi
 				@Override
 				public void run()
 				{
-					boolean connected = false;
-					
-					while(!clientSocket.isClosed() || !connected)
+					while(!clientSocket.isClosed())
 					{
 						String incomingMessage = null;
 						try
@@ -130,29 +128,29 @@ public class ConnectionGraphicalUserInterface extends JFrame implements ActionLi
 						}
 						catch(IOException ioe) { ioe.printStackTrace(); }
 						
-						if ((incomingMessage != null) && !incomingMessage.equals(""))
+						if (incomingMessage == null || incomingMessage.equals(""))
+							continue;
+						
+						JSONObject incomingJSON = null;
+						try
 						{
-							JSONObject incomingJSON = null;
-							try
-							{
-								incomingJSON = (JSONObject)(new JSONParser().parse(incomingMessage));
-							}
-							catch(ParseException pe) { pe.printStackTrace(); }
-							
-							if(incomingJSON.get("action").equals("connected"))
-							{
-								JFrame go = new UserListGraphicalUserInterface(clientSocket);
-				                go.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-				                go.setSize(300, 600);
-				                go.setResizable(true);
-				                go.setVisible(true);
-				                
-				                setVisible(false);
-				                connected = true;
-							}
-							else // Registering
-								JOptionPane.showMessageDialog(null, (String)incomingJSON.get("serverMessage"), "JIM", Integer.parseInt((String)incomingJSON.get("type")));
+							incomingJSON = (JSONObject)(new JSONParser().parse(incomingMessage));
 						}
+						catch(ParseException pe) { pe.printStackTrace(); }
+						
+						if(incomingJSON.get("action").equals("connected"))
+						{
+							JFrame go = new UserListGraphicalUserInterface(clientSocket);
+			                go.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+			                go.setSize(300, 600);
+			                go.setResizable(true);
+			                go.setVisible(true);
+			                
+			                setVisible(false);
+			                break;
+						}
+						else // Registering
+							JOptionPane.showMessageDialog(null, (String)incomingJSON.get("serverMessage"), "JIM", Integer.parseInt((String)incomingJSON.get("type")));
 					}
 				}
 			});

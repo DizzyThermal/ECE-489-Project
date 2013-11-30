@@ -88,7 +88,7 @@ public class UserListGraphicalUserInterface extends JFrame implements MouseListe
 						incomingMessage = bReader.readLine();
 					}
 					catch(IOException ioe) { ioe.printStackTrace(); }
-					if((incomingMessage != null) && !incomingMessage.equals("") && !incomingMessage.equals("[]"))
+					if(incomingMessage == null || incomingMessage.equals("") || incomingMessage.equals("[]"))
 						continue;
 					
 					// We Got Something!
@@ -135,7 +135,7 @@ public class UserListGraphicalUserInterface extends JFrame implements MouseListe
 			{
 				try
 				{
-					listeningSocket = (SSLServerSocket) SSLServerSocketFactory.getDefault().createServerSocket(Integer.parseInt(Resource.PORT));
+					listeningSocket = (SSLServerSocket) SSLServerSocketFactory.getDefault().createServerSocket(Integer.parseInt(Resource.LISTENING_PORT));
 				}
 				catch (Exception e) { e.printStackTrace(); }
 
