@@ -65,7 +65,13 @@ public class ConnectionThread
 							else if(((String)incomingJSON.get("action")).equals("message"))
 								relayMessage((int)(long)incomingJSON.get("userId"), (String)incomingJSON.get("userMessage"));
 							else if(((String)incomingJSON.get("action")).equals("disconnect"))
+							{
 								disconnect(id);
+								socket.close();
+								bReader.close();
+								bWriter.close();
+								this.stop();
+							}
 						}
 					}
 				}
@@ -217,14 +223,13 @@ public class ConnectionThread
 			if(Main.userList.get(i).getId() == id)
 			{
 				Main.userList.remove(i);
-				
+				Main.clientThreads.remove(i);
 				JSONObject connectionJSON = new JSONObject();
 				connectionJSON.put("action", "removeUser");
 				connectionJSON.put("userId", id);
 				Main.writeToAll(connectionJSON.toJSONString());
 				
-				thread.stop();
-				Main.clientThreads.remove(i);
+				
 			}
 		}
 		

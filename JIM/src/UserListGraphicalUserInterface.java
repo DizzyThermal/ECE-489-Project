@@ -77,11 +77,13 @@ public class UserListGraphicalUserInterface extends JFrame implements MouseListe
 				while(!clientSocket.isClosed())
 				{
 					String incomingMessage = null;
-					try
-					{
-						incomingMessage = bReader.readLine();
-					}
-					catch(IOException ioe) { ioe.printStackTrace(); }
+					
+						try
+						{
+							if (bReader != null) 
+								incomingMessage = bReader.readLine();
+						}
+						catch(IOException ioe) { ioe.printStackTrace(); }
 					if(incomingMessage == null || incomingMessage.equals("") || incomingMessage.equals("[]"))
 						continue;
 					
@@ -229,7 +231,7 @@ public class UserListGraphicalUserInterface extends JFrame implements MouseListe
 			json.put("action", "disconnect");
 			bWriter.write(json.toJSONString() + "\n");
 			bWriter.flush();
-			
+			t1.stop();
 			bReader.close();
 			bWriter.close();
 			clientSocket.close();
@@ -238,7 +240,7 @@ public class UserListGraphicalUserInterface extends JFrame implements MouseListe
 		setVisible(false);
 		dispose();
 		
-		t1.stop();
+
 		System.exit(0);
 	}
 	
