@@ -1,3 +1,9 @@
+import java.io.File;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 
 import javax.net.ssl.SSLServerSocket;
@@ -14,6 +20,8 @@ public class Main
 	
 	public static void main(String[] args)
 	{
+		checkForDatabase();
+		
 		try
 		{
 			serverSocket = (SSLServerSocket) SSLServerSocketFactory.getDefault().createServerSocket(Integer.parseInt(Resource.PORT));
@@ -32,6 +40,26 @@ public class Main
 				}
 			}
 			catch (Exception e) { e.printStackTrace(); }
+		}
+	}
+	
+	public static void checkForDatabase()
+	{
+		if(!(new File(System.getProperty("user.dir") + File.separator + "Users.db")).exists())
+		{
+			try
+			{
+				Class.forName("org.sqlite.JDBC");
+				Connection conn = DriverManager.getConnection("jdbc:sqlite:Users.db");
+				
+				Statement stmt = conn.createStatement();
+				String sql = "CREATE TABLE users (username VARCHAR(50), password VARCHAR(50))";
+				stmt.executeUpdate(sql);
+				
+				stmt.close();
+				conn.close();
+			}
+			catch (SQLException | ClassNotFoundException e) { e.printStackTrace(); }
 		}
 	}
 	
