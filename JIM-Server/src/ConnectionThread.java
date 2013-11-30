@@ -109,8 +109,6 @@ public class ConnectionThread
 					json.put("userId", id);
 					json.put("userName", username);
 					json.put("userIp", ip);
-
-					Main.writeToAllButOne(json.toJSONString(), (Main.clientThreads.size()-1));
 					
 					for(int j = 0; j < Main.userList.size(); j++)
 					{
@@ -129,6 +127,7 @@ public class ConnectionThread
 					jsonConnected.put("action", "connected");
 					
 					writeToClient(jsonConnected.toJSONString());
+					Main.writeToAll(json.toJSONString());
 				}
 				else
 					writeToClient(makeJSONMessage("The password entered is incorrect!", JOptionPane.ERROR_MESSAGE));

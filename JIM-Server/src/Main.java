@@ -40,18 +40,7 @@ public class Main
 		for(int i = 0; i < clientThreads.size(); i++)
 			clientThreads.get(i).writeToClient(message);
 	}
-	
-	public static void writeToAllButOne(String message, int index)
-	{
-		for(int i = 0; i < clientThreads.size(); i++)
-		{
-			if(i == index)
-				continue;
-			
-			clientThreads.get(i).writeToClient(message);
-		}
-	}
-	
+
 	public static boolean isConnected(String ip)
 	{
 		for(int i = 0; i < userList.size(); i++)
